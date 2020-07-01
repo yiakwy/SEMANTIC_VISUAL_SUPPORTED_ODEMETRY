@@ -10,14 +10,20 @@ from svso.lib.log import LoggerAdaptor
 
 _logger = logging.getLogger("validation.tum")
 
-TUM_DATASET_NAME = "rgbd_dataset_freiburg1_xyz"
-HDD = "/home/yiakwy"
-ROOT = "{hdd}/WorkSpace".format(hdd=HDD)
-REPO = "SEMANTIC_SLAM"
-PROJECT_ROOT = "{root}/Github/{repo}".format(root=ROOT, repo=REPO)
+from svso.config import Settings
+
+settings = Settings()
+
+TUM_DATASET_NAME = settings.DATASET_NAME # "rgbd_dataset_freiburg1_xyz"
+HDD  = settings.HDD # "/home/yiakwy"
+ROOT = settings.ROOT # "{hdd}/WorkSpace".format(hdd=HDD)
+REPO = settings.REPO # "SEMANTIC_SLAM"
+PROJECT_ROOT = settings.PROJECT_ROOT # "{root}/Github/{repo}".format(root=ROOT, repo=REPO)
+# TUM_DATA_DIR =  "{project_base}/data/tum/{dataset_name}".format(project_base=Project_base,
+#                                                                dataset_name=TUM_DATASET_NAME)
+TUM_DATA_DIR = settings.DATA_DIR
+
 Project_base = PROJECT_ROOT
-TUM_DATA_DIR = "{project_base}/data/tum/{dataset_name}".format(project_base=Project_base,
-                                                               dataset_name=TUM_DATASET_NAME)
 
 class Trajectory3D:
     # Implements STL iterator

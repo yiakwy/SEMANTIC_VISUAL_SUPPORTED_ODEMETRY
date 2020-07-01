@@ -75,12 +75,23 @@ def fetchByRoI(cur_frame, mapblock, method="projection"):
     print("Begin to fetch matched points for PnP ...")
     print("Total fetched ROIs: %d" % len(detected_rois))
 
+    # fetch points visible to the last frame
+    camera = cur_frame.pre.camera
+    # backup codes
+    if camera is None:
+        # find a nearest camera to use
+        cf = cur_frame.pre
+        while camera is None:
+            cf = cf.pre
+            if cf is not None:
+                camera = cf.camera
+            else:
+                break
+
     for roi in detected_rois:
         pointCloud = roi.points
         print("Total fetched points for RoI %s: %d" % (roi, len(pointCloud)))
         for _, point in pointCloud.items():
-            # fetch points visible to the last frame
-            camera = cur_frame.pre.camera
             # print("viewing point %s using camera from Frame#%d" % (point, cur_frame.pre.seq))
 
             cam_pt = camera.viewWorldPoint(point)

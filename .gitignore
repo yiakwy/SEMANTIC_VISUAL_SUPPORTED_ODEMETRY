@@ -1,0 +1,43 @@
+# CMAKE CONFIG
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# ignore generated make files
+build/
+cmake-build-debug/
+config/env_config.h
+*pyc
+*__pycache__
+
+# NODE
+node_modules/
+package-lock.json
+
+# IDE - VIM
+*.swp
+
+# IDE - CLION
+
+# IDE - PyCharm
+.idea/
+
+# IDE - Xcode
+xcode/
+
+# Data files
+*.tar.gz
+
+# Vendors
+vendors/
+
+data/ 
+log/

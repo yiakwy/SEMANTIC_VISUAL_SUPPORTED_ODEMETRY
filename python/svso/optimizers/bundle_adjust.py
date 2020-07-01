@@ -107,9 +107,9 @@ class Optimizer(g2o.SparseOptimizer):
       pass
 
     if self.USE_LANDMARKS:
-      rsmes[1] /= float(len(pointCloud) + len(landmarks))
+      rsmes[1] /= float(len(pointCloud) + len(landmarks)) + 1e-3
     else:
-      rsmes[1] /= float(len(pointCloud))
+      rsmes[1] /= float(len(pointCloud)) + 1e-3
     return rsmes
 
   def UpdateMap(self):
@@ -596,6 +596,10 @@ class LocalBA(BundleAdjustment):
     print("[LocalBA] %d fixed frames" % len(fixed))
     self.adjusted_frames = adjusted
     self.fixed_frames = fixed
+
+    if len(adjusted) == 0:
+      print("Something wrong here ...")
+      pass
 
     once = False
 

@@ -570,13 +570,13 @@ class Frame:
 
     def update_pose(self, pose):
         # see g2opy/python/types/slam3d/se3quat.h for details for the interface
-        print("R before update shape: %s, data: \n%s\n" % (self.R0.shape, self.R0))
+        # print("R before update shape: %s, data: \n%s\n" % (self.R0.shape, self.R0))
         self.R0 = pose.orientation().matrix()
-        print("R after update shape: %s, data: \n%s\n" % (self.R0.shape, self.R0))
+        # print("R after update shape: %s, data: \n%s\n" % (self.R0.shape, self.R0))
 
-        print("t before update shape: %s, data: \n%s\n" % (self.t0.shape, self.t0))
+        # print("t before update shape: %s, data: \n%s\n" % (self.t0.shape, self.t0))
         self.t0 = pose.position().reshape((3, 1))
-        print("t after update shape: %s, data: \n%s\n" % (self.t0.shape, self.t0))
+        # print("t after update shape: %s, data: \n%s\n" % (self.t0.shape, self.t0))
 
         # update R1, t1
         if self.pre is not None:
@@ -594,8 +594,8 @@ class Frame:
 
     def get_pose_mat(self):
         if False:  # self.camera is not None:
-            print("camera.t0 shape: %s, data: \n%s\n" % (self.camera.t0.shape, self.camera.t0))
-            print("frame.t0  shape: %s, data: \n%s\n" % (self.t0.shape, self.t0))
+            # print("camera.t0 shape: %s, data: \n%s\n" % (self.camera.t0.shape, self.camera.t0))
+            # print("frame.t0  shape: %s, data: \n%s\n" % (self.t0.shape, self.t0))
             pose = g2o.SE3Quat(self.camera.R0, self.camera.t0.reshape(3, ))
         else:
             pose = g2o.SE3Quat(self.R0, self.t0.reshape(3, ))

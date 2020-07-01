@@ -1,0 +1,1 @@
+class RelocalizationErr(Exception): pass

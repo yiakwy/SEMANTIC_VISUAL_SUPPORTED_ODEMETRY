@@ -562,7 +562,7 @@ class PCViewer:
             # check if computed projection of that point is inside bbox
             cam_pt = frame.camera.viewWorldPoint(point)
             projection = frame.camera.view(cam_pt)
-            if not px.roi.isIn(projection):
+            if not projection or not px.roi.isIn(projection):
                 # remove the point (mighted be optimized out) outside of roi
                 y1, x1, y2, x2 = px.roi.bbox
                 print("[PCViewer.Update] %s is out of %s's bbox (%f, %f, %f, %f)" % (

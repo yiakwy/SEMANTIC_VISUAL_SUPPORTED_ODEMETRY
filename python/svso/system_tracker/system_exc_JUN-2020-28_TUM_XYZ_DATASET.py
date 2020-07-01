@@ -17,9 +17,7 @@ from svso.config import Settings
 
 settings = Settings()
 print(settings)
-
 Project_base = settings.PROJECT_ROOT
-Camera_device = settings.CAMERA_DEVICE
 
 class System:
 
@@ -27,7 +25,7 @@ class System:
         # construct a map block, where typically raw map data should be read from this point
         block = RuntimeBlock()
         self._block = block
-        block.load_device(Camera_device)
+        block.load_device("{project_base}/data/tum/camera1.yaml".format(project_base=Project_base))
 
         # initialize a tracker
         tracker = SVSOTracker().set_FromMap(block)
@@ -135,12 +133,6 @@ class System:
                 # viewer.Init()
                 # Pycharm has some problems to run this snippet of codes
                 viewer.Start()
-
-            # the tracker is in relocalization mode and not initialized
-            if tracker._is_relocalization_mode and not tracker.isInitialized():
-                # I don't wan to use a new map here
-                viewer.set_FromMap(tracker._map)
-                pass
 
             # @todo : TODO fix encoding error
             logging.info("exec tracker to track motions: %d" % cnt)

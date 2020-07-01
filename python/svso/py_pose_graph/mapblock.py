@@ -10,6 +10,7 @@ from svso.py_pose_graph.frame import Frame
 from svso.py_pose_graph.point3d import CameraPoint3D, WorldPoint3D
 from svso.matcher import ROIMatcher
 from svso.optimizers.bundle_adjust import g2o
+from svso.lib.exceptions import RelocalizationErr
 from svso.config import Settings
 
 settings = Settings()
@@ -280,7 +281,7 @@ class RuntimeBlock:
                 landmark = left_px.roi.findParent()
                 landmark.associate_with(kp, cur_frame, left_px_idx)
                 landmark.associate_with(kp, last_frame, right_px_idx)
-                print("Associate KeyPoint %s with RoI %s" % (kp, landmark))
+                # print("Associate KeyPoint %s with RoI %s" % (kp, landmark))
                 landmark.add(kp)
                 kp.set_color(np.array(landmark.color or [1., 1., 0.]) * 255.)
 
@@ -321,6 +322,13 @@ class RuntimeBlock:
                   (len(mtched_indice), len(unmtched_landmarks_indice), len(unmtched_detections_indice)))
 
             mtched, unmtched_landmarks, unmtched_detections = [], [], []
+
+            # trigger relocalization
+            if len(mtched_indice) == 0:
+                # Not very stable
+                # raise RelocalizationErr()
+                pass
+
             # mtched List<Tuple> of (row,col,weights[row,col],distance[row,col]))
             for match in mtched_indice:
                 landmark = trackList[match[0]]

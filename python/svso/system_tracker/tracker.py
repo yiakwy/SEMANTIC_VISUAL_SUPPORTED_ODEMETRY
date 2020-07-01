@@ -21,6 +21,7 @@ from svso.matcher import OpticalFlowBasedKeyPointsMatcher, ROIMatcher
 from svso.optimizers.bundle_adjust import g2o, BundleAdjustment, PoseOptimization
 from svso.localization.pnp import fetchByRoI, PnPSolver
 from svso.lib.maths.rotation import Quaternion
+from svso.lib.exceptions import RelocalizationErr
 from svso.validation_toolkit.tum import TUM_DATA_DIR, query_depth_img, Program as Read_GT_Program
 from svso.mapping.local_mapping import LocalMapping
 from svso.mapping.relocalization import Relocalization
@@ -446,7 +447,7 @@ class Pixel2D:
 
 ## == Legacy Codes End ==
 
-class RelocalizationErr(Exception): pass
+# class RelocalizationErr(Exception): pass
 
 # This should be running in the main thread
 class Tracker:
@@ -663,17 +664,25 @@ class Tracker:
             self.ref = self.cur
 
             # using ground truth R, t
+            # see key frames selection principles discussion: https://github.com/raulmur/ORB_SLAM2/issues/872
+            self._map.add_new_key_frame(self.cur)
+            self.cur.isKeyFrame = True
+            # setting current frame as reference
+            self.ref = self.cur
+
+            # using ground truth R, t
             if USE_POSE_GROUND_TRUTH and self.cur.timestamp is not None:
                 self.cur.R0 = self.cur.R_gt[0:3, 0:3]
                 self.cur.t0 = self.cur.t_gt
 
-                camera = Camera(self._map.device, self.cur.R1, self.cur.t1, self.cur.t0, H=self.cur.img.shape[0],
-                                W=self.cur.img.shape[1])
-                camera.R0 = self.cur.R0
-                camera.t0 = self.cur.t0
-
-                self.cur.camera = camera
                 pass
+
+            camera = Camera(self._map.device, self.cur.R1, self.cur.t1, self.cur.t0, H=self.cur.img.shape[0],
+                            W=self.cur.img.shape[1])
+            camera.R0 = self.cur.R0
+            camera.t0 = self.cur.t0
+
+            self.cur.camera = camera
 
             return False
 
@@ -728,8 +737,11 @@ class Tracker:
             self.flow_mask = flow_mask
 
         if len(kps_mtched) < 10:
-            logging.info("switch state from %s to %s" % (self.state, Tracker.State.LOSTED))
-            self.state = Tracker.State.LOSTED
+            # logging.info("switch state from %s to %s" % (self.state, Tracker.State.LOSTED))
+            # self.state = Tracker.State.LOSTED
+            ###
+            self.cur.copy_pose_from(self.get_last_frame())
+            ###
             return
 
         #### Step 4 : triangluation with reference frame
@@ -740,6 +752,9 @@ class Tracker:
             ref_kps_mtched, ref_mask = self.cur.match(reference_frame, reference_frame.kps, reference_frame.kps_feats)
         except Exception as e:
             print(e)
+            ###
+            self.cur.copy_pose_from(self.get_last_frame())
+            ###
             return False
         self.ref_kps_mtched, self.ref_mask = ref_kps_mtched, ref_mask
 
@@ -765,6 +780,9 @@ class Tracker:
 
         if len(ref_kps_mtched) < 10:  # unlikely to invoke
             print("Not enough points!")
+            ###
+            self.cur.copy_pose_from(self.get_last_frame())
+            ###
             return False
 
         try:
@@ -1373,7 +1391,7 @@ class Tracker:
                                     kps_mtched, mask)
 
         # culling
-        # self._map.Culling()
+        self._map.Culling()
 
         # refine poses and location of landmarks (by points)
         optimizer = BundleAdjustment().set_FromMap(self._map)
@@ -1474,6 +1492,8 @@ class Tracker:
         except RelocalizationErr as e:
             isSucc = False
             logging.info("switch state from %s to %s" % (self.state, Tracker.State.LOSTED))
+            if self._is_relocalization_mode:
+                print("Something wrong here ...")
             self.state = Tracker.State.LOSTED
 
         if not self.isInitialized():
@@ -1505,7 +1525,12 @@ class Tracker:
                 self._PnP(isSucc)
 
                 self._map.add_new_key_frame(self.cur)
-                self.mapper.add(self.cur)
+
+                #
+                if isSucc:
+                    # if we have enough matches
+                    self.mapper.add(self.cur)
+                    self.cur.isKeyFrame = True
             else:
                 if self.state == Tracker.State.LOSTED:
                     # we cannot find enough matches with the last frame

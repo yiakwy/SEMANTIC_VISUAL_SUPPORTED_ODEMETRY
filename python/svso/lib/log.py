@@ -32,11 +32,14 @@ def configure_logging(config):
         raise NotConfigured(details="passing null config!")
 
 def init_logging():
+    logging.basicConfig(level=logging.DEBUG)
     console = logging.StreamHandler(stream=sys.stdout)
     root_logger = logging.getLogger()
     for handler in root_logger.handlers:
         root_logger.removeHandler(handler)
     fmt = logging.Formatter("%(asctime)s [%(levelname)s]:%(filename)s.%(name)s, in line %(lineno)s >> %(message)s")
     console.setFormatter(fmt)
-    console.setLevel(logging.INFO)
+    console.setLevel(logging.DEBUG)
     root_logger.addHandler(console)
+
+

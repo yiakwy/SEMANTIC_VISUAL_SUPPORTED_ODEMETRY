@@ -121,7 +121,7 @@ class LocalMapping(Worker):
             self._map.registerKeyPoints(cur_frame, cur_kp, reference_frame, reference_frame.kps, cur_cam_pts,
                                         ref_cam_pts, points, kps_mtched, mask)
 
-            # self._map.Culling()
+            self._map.Culling()
 
             # used in the inner of a thread, no notification
             print("[Thread %d] LocalMapping.CreateMapPoints, compelte modifying mapblock." % \
@@ -158,26 +158,28 @@ class LocalMapping(Worker):
         self._optimizer.Init()
 
         # optimize!
-        self._optimizer.optimize(max_iterations=7)
+        # len(adjusted_frames) == 0 will throw segmentation error!
+        if len(self._optimizer.adjusted_frames) > 0:
+            self._optimizer.optimize(max_iterations=7)
 
-        # update coordinates
-        with self._map.modifying_mapblock_locker:
-            print("[Thread %d] LocalMapping.LocalBA, waiting for peer modifiers to complete ..." % \
-                  (self.seq,))
-            self._map.modifying_completion_condition.wait_for(lambda: self._map.complete_modifying)
-            print("[Thread %d] LocalMapping.LocalBA, begin to modify mapblock." % \
-                  (self.seq,))
-            # will be roll back by "set_compelte_modifying"
-            self._map.complete_modifying = False
+            # update coordinates
+            with self._map.modifying_mapblock_locker:
+                print("[Thread %d] LocalMapping.LocalBA, waiting for peer modifiers to complete ..." % \
+                      (self.seq,))
+                self._map.modifying_completion_condition.wait_for(lambda: self._map.complete_modifying)
+                print("[Thread %d] LocalMapping.LocalBA, begin to modify mapblock." % \
+                      (self.seq,))
+                # will be roll back by "set_compelte_modifying"
+                self._map.complete_modifying = False
 
-            self._optimizer.UpdateMap()
+                self._optimizer.UpdateMap()
 
-            # used in the inner of a thread, no notification
-            print("[Thread %d] LocalMapping.LocalBA, compelte modifying mapblock." % \
-                  (self.seq,))
-            self._map.complete_modifying = True
+                # used in the inner of a thread, no notification
+                print("[Thread %d] LocalMapping.LocalBA, compelte modifying mapblock." % \
+                      (self.seq,))
+                self._map.complete_modifying = True
 
-        print("[LocalMapping.LocalBA] done.")
+            print("[LocalMapping.LocalBA] done.")
 
         pass
 
@@ -204,10 +206,10 @@ class LocalMapping(Worker):
             # I am not sure whether LocalBA change the coordinates in a wrong way
             self.LocalBA()
 
-        except Exception as e:
-            self.logger.error(e)
         except RuntimeErr as e:
-            self.logger.error(e)
+            print(e) # self.logger.error(e)
+        except Exception as e:
+            print(e) # self.logger.error(e)
         finally:
             self.tasks.task_done()
             # notify the main thread to send drawing request to drawer

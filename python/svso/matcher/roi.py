@@ -148,7 +148,15 @@ class ROIMatcher:
         assignment = np.zeros((N, M))
         for i, col in enumerate(col_indice):
             row = row_indice[i]
-            if weights[row, col] > self.THR:
+            print("landmark %s +--> Observation %s : score %f, uiou %f, corr %f" % (
+                row_names[row], column_names[col], weights[row, col], distance[row, col], corr[row, col]
+            ))
+            # the solver has probability to produce unmatched pairs with different labels
+            if trackList[row].roi_features['label'] != detected_objects[col].roi_features['label']:
+                unmtched_landmarks.append(row)
+                unmtched_detections.append(col)
+                continue
+            if weights[row, col] > self.THR or (product == "composite" and distance[row, col] < 0.5): # 0.5 !important
                 unmtched_landmarks.append(row)
                 unmtched_detections.append(col)
                 continue

@@ -4,7 +4,7 @@
   "description": "implementation of slam using semantic recognition for depth graph registration and precise relocalization",
   "main": "index.js",
   "scripts": {
-    "git:commit": "git-cz && ./node_modules/validate-commit-msg/lib/cli.js", 
+    "git:commit": "git-cz && ./node_modules/validate-commit-msg/lib/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,8 +20,8 @@
   "homepage": "https://github.com/yiakwy/SEMANTIC_SLAM#readme",
   "devDependencies": {
     "@commitlint/config-conventional": "^8.3.4",
-    "cz-conventional-changelog": "^3.1.0",
-    "husky": "^4.2.3",
+    "cz-conventional-changelog": "^3.2.0",
+    "husky": "^4.2.5",
     "validate-commit-msg": "^2.14.0"
   },
   "config": {
@@ -53,5 +53,8 @@
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
+  },
+  "dependencies": {
+    "commitlint": "^9.0.1"
   }
 }

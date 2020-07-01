@@ -1,0 +1,9 @@
+[submodule "Pangolin"]
+  path = vendors/github.com/Pangolin
+  url = https://github.com/stevenlovegrove/Pangolin.git
+[submodule "opencv"]
+  path = vendors/github.com/opencv
+  url = https://github.com/opencv/opencv.git
+[submodule "opencv_contrib"]
+  path = vendors/github.com/opencv_contrib
+  url = https://github.com/opencv/opencv_contrib.git
