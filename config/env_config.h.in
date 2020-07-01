@@ -1,0 +1,18 @@
+#ifndef ENV_CONFIG_HPP_
+#define ENV_CONFIG_HPP_
+
+#include <string>
+
+namespace svso {
+namespace system {
+namespace env_config {
+
+const std::string ROOT = "@ROOT@";
+const std::string LOG_DIR = "@LOG_DIR@";
+const std::string OS = "";
+const std::string DATA_DIR = "@DATA_DIR@";
+
+        }
+    }
+}
+#endif

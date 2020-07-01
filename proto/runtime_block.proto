@@ -1,0 +1,169 @@
+// Copyright 2020 Lei/Yi Wang (yiak.wy@gmail.com)
+
+syntax = "proto3";
+
+option java_multiple_files=true;
+option java_package = "io.svso";
+option java_outer_classname = "SVSO";
+option objc_class_prefix = "SVSO";
+
+package svso;
+
+import "google/protobuf/timestamp.proto";
+
+message Identity {
+  uint64 id = 1;
+  uint64 seq = 2;
+  string uuid = 3;
+  string tok = 4;
+}
+
+message Point3D {
+  // == Identity ==
+  Identity identity = 1;
+
+  // == Attributes ==
+  double x = 4;
+  double y = 5;
+  double z = 6;
+
+}
+
+message CameraPoint3D {
+  // == Identity ==
+  Identity identity = 1;
+
+  // == Attribute
+  Point3D local = 2;
+
+  // == Covisibility Graph Topology
+  Pixel2D px = 4;
+  Point3D world = 5;
+}
+
+message WorldPoint3D {
+  // == Identity ==
+  Identity identity = 1;
+
+  // == Attribute == 
+  Point3D world = 5; 
+
+  // == Covisibility Graph Topology ==
+  // Map: Frame::Id -> pixel location
+  map<uint64, uint32> frames = 4;
+
+}
+
+message Pixel2D {
+  // == Identity ==
+  Identity identity = 1;
+
+  // == Attributes ==
+  double r = 4;
+  double c = 5;
+
+  // == Covisibility Graph Topology ==
+  repeated CameraPoint3D points = 6; // in camera space
+  Frame frame = 7;
+  ROI roi = 8;
+  
+}
+
+message Pose6DoF {
+  // == Identity ==
+  Identity identity = 1;
+
+  // == Attributes ==
+
+  double x = 4;
+  double y = 5;
+  double z = 6;
+  double yaw = 7;
+  double pitch = 8;
+  double roll = 9;
+}
+
+// see lib matrixArray for details, which is a light wrapper upon numpy
+message MatrixArray {
+  bytes data = 1;
+  repeated int32 shape = 2;
+}
+
+enum ROIType {
+  UNDEFINED = 0;
+}
+
+message Observation {
+  // == Identity ==
+  Identity identity = 1;
+
+  // == Attributes ==
+  string observed_label = 4;
+  google.protobuf.Timestamp publish_time = 5;
+  uint32 frame_id = 6;
+}
+
+message BBox {
+  double x1 = 1;
+  double y1 = 2;
+  double x2 = 3;
+  double y2 = 4;
+}
+
+message KeyPointFeature {
+  repeated double feat_vec = 1;
+}
+
+message KeyPixelFeature {
+  repeated double feat_vec = 1;
+}
+
+message RoIFeature {
+  BBox bbox = 1;
+  repeated double feat_vec = 2;
+  repeated int32 encoded_class_id = 3;
+  double score = 4; 
+}
+
+message ROI {
+  // == Identity ==
+  Identity identity = 1;
+
+  // == Attributes ==
+  string label = 4; // computed label
+  ROIType roi_type = 5;
+  repeated Point3D kps = 6;
+  repeated KeyPointFeature kps_feats = 7;
+  RoIFeature roi_feature = 8;
+}
+
+message Frame {
+  // == Identity ==
+  Identity identity = 1;
+
+  // == Attributes ==
+  Pose6DoF anchor = 2;
+
+  MatrixArray R0 = 3;
+  MatrixArray t0 = 4;
+
+  MatrixArray R1 = 5;
+  MatrixArray t1 = 6;
+
+  // Map: Pixel2D::LocId -> Pixel2D
+  map<uint32, Pixel2D> pixels = 7;
+  repeated ROI detections = 8;
+  
+  repeated Pixel2D kps = 9;
+  repeated KeyPixelFeature kps_feats = 10;
+
+}
+
+message RuntimeBlock {
+  repeated Frame frames = 1;
+  map<int32, ROI> landmarks = 2;
+  repeated Point3D points = 3;
+  repeated int32 active_frames = 4;
+
+}
+
