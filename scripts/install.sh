@@ -40,19 +40,31 @@ function OSX() {
 	else
 		warn "node not installed. Installing ..."
 		brew install node
-		
+        # node version manager
+		curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+        sudo mkdir -p ~/.nvm
+        sudo chown -R $USER ~/.nvm
+        npm config set unsafe-perm=true
 	fi
 
 	init_node
 	(install_node_modules_on_MacOSX) || {
 		err "Failing to install dependancies on OSX"
+        # MacOS 10.9
+        if [ -f "/usr/local/bin/libtool.bak" ]; then
 		mv /usr/local/bin/libtool.bak /usr/local/bin/libtool
+        fi
 	}
 	# insall_pcl
 
     # install gitbook plugins
 
-    brew install graphviz
+    if brew ls --versions graphviz > /dev/null; then
+        info "graphviz (gitbook plugin) installed."
+    else
+        warn "graphviz (gitbook plugin) not installed. Installing ..."
+        brew install graphviz
+    fi
     # instal PlantUML
 
     # mkdir for uml
@@ -120,13 +132,7 @@ function configGitCommitter() {
 	info "init committing message format."
 	commitizen init --force cz-conventional-changelog --save --save-exact
 	info "init (force) changelog."
-	if [ ${OS} = "OSX" ]; then
-	~/.npm-packages/bin/conventional-changelog -p angular -i CHANGELOG.md -s
-	fi
-		
-	if [ ${OS} = "Ubuntu" ]; then
 	conventional-changelog -p angular -i CHANGELOG.md -s
-	fi
 	echo "
 module.exports = {
 	extends: ['@commitlint/config-conventional']
@@ -210,10 +216,16 @@ function install_node_modules_on_MacOSX() {
 	set -e
 	# dealing with mac libtool conflictions
 	# see discussion https://github.com/barrysteyn/node-scrypt/issues/113
-	mv /usr/local/bin/libtool /usr/local/bin/libtool.bak
+	# MacOS 10.9
+    if [ -f "/usr/local/bin/libtool" ]; then
+    mv /usr/local/bin/libtool /usr/local/bin/libtool.bak
+    fi
 	$INSTALLER rebuild node-sass
 	install_node_modules
+    # MacOS 10.9
+    if [ -f "/usr/local/bin/libtool.bak" ]; then
 	mv /usr/local/bin/libtool.bak /usr/local/bin/libtool
+    fi
 
 }
 
@@ -237,9 +249,13 @@ function install_pcl() {
 main() {
 	if [ $(uname -s) == "Darwin" ]; then
 		OS="OSX"
-		info "<$(uname -s)> detected. checking Max OSX versions: Major.Minor ..."
+    
+        MAC_MAJOR_VERSION=$(sw_vers -productVersion | awk -F "." '{print $1 "." $2}')
+        MAC_MINOR_VERSION=$(sw_vers -productVersion | awk -F "." '{print $3}')      
+
+		info "<$(uname -s)> detected. checking Max OSX versions: $MAC_MAJOR_VERSION.$MAC_MINOR_VERESION ..."
 		info "installing ..."
-		OSX
+		OSX $MAC_MAJOR_VERSION
 
 		configGitCommitter
 
