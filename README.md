@@ -1,8 +1,28 @@
+SEMANTIC_VISUAL_SUPPORTED_Odemetry
+==================================
 
-
-## SEMANTIC_VISUAL_SUPPORTED_Odemetry
-implementation of VO using semantic feature extraction \(SFE\) of observations \(ROI\) for depth graph registration 
+This is a sparse Monocular SLAM project merely for research in HDMap hibrid pipeline. Constrast to dense or recent popular semi-dense slam projects like "DTAM", "LSD-SLAM", "DVO", this is a implementation of Visual Odemetry \(VO\) using semantic feature extraction \(SFE\) of observations \(ROI\) for sparse depth graph registration 
 and precise relocalization solutions.
+
+![mapping](https://drive.google.com/file/d/10ZMLZB9dmMf8OUzE1wOK3-trtCnwHpA_/view?usp=sharing)
+
+![relocalization](https://drive.google.com/file/d/1D04cuHaEC1v70PSUDf0K1AL9gbJxp2xb/view?usp=sharing)
+
+The purpose of the project is by applying semantic segmentation and recoginiztion in videos while introducing spatial information of depth graph triangulated from key points, the project wants to show that:
+
+1. Sparse SLAM like ORBSlam is mainly for odemetry or localization process. By introducing semantic information of observations from camera, we can construct valid mapping procedures using sparse estimated 3d points, though the accuracy may vary with various factors.
+
+2. BoW for images is a method of clustering, but should not the ideal one; we can use natural segmented instances to group and recall key points, frames. In this project, we use Landmark to recall associated keypoints and frames for PnP process which is very easy to do. Our tests show that the computed pose are very close to ground truth.
+
+3. In sparse SLAM, matching is accurate only when two frames are close enough. This holds even though we apply different strategies of test ratios with risks of greatly reducing mathing of points. 
+
+But meanwhile, triangulation from initialization or local mapping statges would be greately improved when stereo disparity becomes large and more frames \(> 2 frames\)  are involved (Global Bundle Adjustment). This means two frames used in matching can't be close. 
+
+Hence I made great efforts in designing tracking state machine and methods for matching to resolve above mentioned delimma to get very good mathching results but preserve triangulation precisions.
+
+![matching](https://drive.google.com/file/d/1Wca-gyz4EzCQsOlwfMhVewVDFs-erDrb/view?usp=sharing)
+
+## Architecture
 
 The solution compromises tracking state machine using sparse keypoints and semantic detections both for localization
 and sparse mapping. Contrast to merely using keppoints in sparse SLAM, semnatic detection and matching of objects,
@@ -14,18 +34,22 @@ ROI instead of using precomputed Bag of Words method.
 One of the application of such semantic slam is relocalization method. I implemented a full functional Relocalization based on
 Bipartite landmarks matching for initial alignment and ICP algorithm to compute transform of a robot.
 
+![framework](https://drive.google.com/file/d/1UwCpduO2uADV8Pt_eZFWER-xOFNlaoll/view?usp=sharing)
+
 ## Installation
 
 ### Dependencies
 
-The most of libraries dependencies could be installed automatically by provided scripts in "$ROOT/scripts". But there are still some third party packages
+The most of libraries and dependencies could be installed automatically by provided scripts in "$ROOT/scripts". But there are still some third party packages
 needed be installed from source manually. Instructions or automation scripts provided. Third parties projects built from source will be distributed into "${ROOT}/vendors/${REPO}/". For example, we build 
 tensorflow inside "${ROOT}/vendors/github.com/tensorflow_cc/tensorflow_cc/tensorflow".
 
 ### Env
 
-The default system is built upon `Ubuntu 18.04` but other verions are also possible sopported. The hardware includes a physical GeForce RTX GPU (compute ability 7.5). According the
-NV website and our tests, `cuda 10.1`, `cudnn` 7.6.5
+The default system is built upon `Ubuntu 18.04` but other verions are also possible to be sopported. The hardware includes a physical GeForce RTX GPU (compute ability 7.5) and monocular camera with a workable scale advisor device. 
+
+According to the NV website and our tests, `cuda 10.1`, `cudnn` 7.6.5 is just enough. At the beginning, I choose MASK-RCNN pre-trained with coco dataset for POC. You change the model to lighter one to compute semantic features for instances. In our tests, the features are not distinguwshable from objects with the same label, hence we use
+**UIoU** I invented last year in ROI matching procesure \(see `ROIMatcher`\).  
 
 ### Step1: Build general dependencies of the project 
 
@@ -33,12 +57,12 @@ NV website and our tests, `cuda 10.1`, `cudnn` 7.6.5
 
 ### Step2: Install anaconda conda and create virtual environments with python3.6 by conda
 
-This will install c++ development libraries together with ros packages.
+The above step will install c++ development libraries together with ros packages.
 
 ### Step3: Install python dependencies
 
-This step will creates environment to run python codes inside projects, which `including all in one` Semantic Visual Supported Odemetry \(SVOSO\) tracker
-in "${ROOT}/notebooks/svso_tracker.ipynb" and packages in "${ROOT}/python"
+This step creates environment to run python codes inside the project, which `including all in one` Semantic Visual Supported Odemetry \(SVOSO\) tracker
+in "${ROOT}/notebooks/svso_tracker.ipynb" and python implementation of svso in "${ROOT}/python"
 
 > bash scripts/init_python.sh
 
@@ -46,13 +70,15 @@ in "${ROOT}/notebooks/svso_tracker.ipynb" and packages in "${ROOT}/python"
 
 > bash scripts/thirdparty/linux/deb/apt/
 
-This will automatically install build essentials, cmake with ssl support and opencv4 with python bindings to the current active python binary.
+The above step will automatically install build essentials, cmake with ssl support and opencv4 with python bindings to the current active python binary.
 
 ### Step5: C++ specific devleopment libraries
 
-We moved our major backend into c++ version to make full use of concurrency and parallel computing abilities. The backend include a tracker to
-estimate camera poses and extract landmarks registration,  key frame selection and keypoints depth triangluation procedures, local mapping with ROI and finally 
-a relocalization algorithm based landmarks matching procedures.
+We moved our major backend into c++ version to make full use of concurrency and parallel computing abilities. The backend include 
+
+- **a tracker** to estimate camera poses and extract landmarks for key points registration, key frame selection and keypoints depth triangluation procedures, 
+- **local mapping** thread with ROI 
+- and finally **a relocalization** thread to update map when a scenario change and visited objects detected.
 
 ##### Step 5-1: Install Protobuf
 
@@ -92,6 +118,11 @@ If script does not work \(due to your network proxy, git ssh configuration, git 
 Since bazel consumes a large portion of memories \[1\]\[2\] which could break your building process, replace bazel build command with the following one:
 
 > sudo bazel build --jobs=8 --config=monolithic tensorflow:libtensorflow_all.so
+
+## Data
+
+All the data reside in "$ROOT/data/${DATASET\_SOURCE}/${DATASET\_NAME}". Curerntly I have tested TUM hand hold camera dataset with rgbd ground truths for references.
+More dataset will be supported soon
 
 ## Build
 
