@@ -4,10 +4,10 @@ Semantic Visual Supported Odemetry
 This is a sparse Monocular SLAM project merely for research in the realm of HDMap hibrid pipeline construction. Constrast to dense or recent popular semi-dense slam projects such as "DTAM", "LSD-SLAM", "DSO", this is an implementation of Visual Odemetry \(VO\) using semantic feature extractor \(SFE\) of observations \(i.e., ROI\) for sparse depth graph registration and precise relocalization solutions.
 
 <img src="https://drive.google.com/uc?export=view&id=10ZMLZB9dmMf8OUzE1wOK3-trtCnwHpA_" 
-alt="mapping" width="240" height="180" border="10" />
+alt="mapping" width="449" height="180" border="10" />
 
 <img src="https://drive.google.com/uc?export=view&id=1D04cuHaEC1v70PSUDf0K1AL9gbJxp2xb"
-alt="relocalization" width="240" height="180" border="10" />
+alt="relocalization" width="240" height="361" border="10" />
 
 The purpose of the project is that by applying semantic segmentation and recoginiztion in videos while introducing spatial information of depth graph triangulated from key points, the project wants to show that:
 
