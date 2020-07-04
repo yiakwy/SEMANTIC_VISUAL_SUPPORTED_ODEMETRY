@@ -3,10 +3,10 @@ Semantic Visual Supported Odemetry
 
 This is a sparse Monocular SLAM project merely for research in the realm of HDMap hibrid pipeline construction. Constrast to dense or recent popular semi-dense slam projects such as "DTAM", "LSD-SLAM", "DSO", this is an implementation of Visual Odemetry \(VO\) using semantic feature extractor \(SFE\) of observations \(i.e., ROI\) for sparse depth graph registration and precise relocalization solutions.
 
-<img src="https://drive.google.com/file/d/10ZMLZB9dmMf8OUzE1wOK3-trtCnwHpA_/view?usp=sharing" 
+<img src="https://drive.google.com/uc?export=view&id=10ZMLZB9dmMf8OUzE1wOK3-trtCnwHpA_" 
 alt="mapping" width="240" height="180" border="10" />
 
-<img src="https://drive.google.com/file/d/1D04cuHaEC1v70PSUDf0K1AL9gbJxp2xb/view?usp=sharing"
+<img src="https://drive.google.com/uc?export=view&id=1D04cuHaEC1v70PSUDf0K1AL9gbJxp2xb"
 alt="relocalization" width="240" height="180" border="10" />
 
 The purpose of the project is that by applying semantic segmentation and recoginiztion in videos while introducing spatial information of depth graph triangulated from key points, the project wants to show that:
@@ -19,7 +19,7 @@ The purpose of the project is that by applying semantic segmentation and recogin
 But meanwhile, triangulation from initialization or local mapping statges would be greately improved when stereo disparity becomes large and more frames \(> 2 frames\)  are involved (Global Bundle Adjustment). This means that two frames used in matching can't be close.  
 Hence I made great efforts in designing tracking state machine and methods for matching to resolve above mentioned delimma to get very good mathching results while preserve triangulation precisions.
 
-<img src="https://drive.google.com/file/d/1Wca-gyz4EzCQsOlwfMhVewVDFs-erDrb/view?usp=sharing" 
+<img src="https://drive.google.com/uc?export=view&id=1Wca-gyz4EzCQsOlwfMhVewVDFs-erDrb" 
 alt="matching" width="240" height="180" border="10" />
 
 ## Architecture
@@ -34,10 +34,10 @@ ROI instead of using precomputed Bag of Words method.
 One of the application of such semantic SLAM is the relocalization method. I implemented a full functional Relocalization based on
 Bipartite landmarks matching for initial alignment and ICP algorithm to compute transform of a robot.
 
-<img src="https://drive.google.com/file/d/1UwCpduO2uADV8Pt_eZFWER-xOFNlaoll/view?usp=sharing"
+<img src="https://drive.google.com/uc?export=view&id=1UwCpduO2uADV8Pt_eZFWER-xOFNlaoll"
 alt="framework" width="240" height="180" border="10" />
 
-More technical details about data stucture, system design and algorithms can be found at the public report [SVSO](https://drive.google.com/file/d/1XWf_esVG2gso-aZVtplwyTEWV8a8iSFa/view?usp=sharing).
+More technical details about data stucture, system design and algorithms can be found at the public report [SVSO](https://drive.google.com/uc?export=view&id=1XWf_esVG2gso-aZVtplwyTEWV8a8iSFa).
 
 ## Installation
 
@@ -142,5 +142,5 @@ or using building script "${ROOT}/scripts/build.sh" where we provide flags contr
 [1] github.com/tensorflow/tensorflow/issues/38183
 [2] github.com/FloopCZ/tensorflow_cc/issues/213
 [3] https://github.com/tensorflow/tensorflow/issues/38237
-[4] SVSO documentation and tutorial : [google driver](https://drive.google.com/file/d/1XWf_esVG2gso-aZVtplwyTEWV8a8iSFa/view?usp=sharing)
+[4] SVSO documentation and tutorial : https://drive.google.com/file/d/1XWf_esVG2gso-aZVtplwyTEWV8a8iSFa/view?usp=sharing, archived on 4th Jun, 2020
 ```
