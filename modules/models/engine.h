@@ -7,8 +7,15 @@
 #ifndef SEMANTIC_RELOCALIZATION_ENGINE_H
 #define SEMANTIC_RELOCALIZATION_ENGINE_H
 
-#include "tensorflow/core/platform/env.h"
-#include "tensorflow/core/public/session.h"
+// Tensorflow building scripts has been updated
+// #include "tensorflow/core/platform/env.h"
+// #include "tensorflow/core/public/session.h"
+
+   #include <tensorflow/core/platform/env.h>
+   #include <tensorflow/core/public/session.h>
+
+// to support tensorflow serving
+#include <tensorflow/cc/saved_model/loader.h>
 
 #include <memory>
 #include <string>
@@ -43,7 +50,7 @@ using std::vector;
 #include <thread>
 #include <mutex>
 // not available in c++11, but defined in c++14
-// #include <shared_mutx>
+// #include <shared_mutex>
 #include <condition_variable>
 #include <functional>
 #include <future>
@@ -134,7 +141,7 @@ public:
     // Factors ...
 
     // @todo : TODO
-    explicit TensorFlowEngine(const std::string& graph_pb_def) {
+    explicit TensorFlowEngine(const std::string& graph_pb_def) : Engine() {
         load_graph(graph_pb_def);
         // async_engine_executor_ = new std::thread(&TensorFlowEngine::HandleInference, this);
         Init();
@@ -183,6 +190,39 @@ public:
         LOG(INFO) << base::logging::format(
                 "[%s.%s] Complete loading <%s>.", CLASS_NAME.c_str(), METHOD_NAME.c_str(), graph_pb_def.c_str()
         );
+        ///*
+        int nd_count = graph_def_.node_size();
+        for (int i = 0; i < nd_count; i++ )
+        {
+            auto node = graph_def_.node(i);
+            std::cout << "Names: " << node.name() << std::endl;
+        }
+         //*/
+
+    }
+
+    //
+    void load_saved_model(const std::string& export_dir)
+    {
+        const std::string& METHOD_NAME="load_graph";
+        LOG(INFO) << base::logging::format(
+                "[%s.%s] loading <%s> ...", CLASS_NAME.c_str(), METHOD_NAME.c_str(), export_dir.c_str()
+        );
+        // create session
+        const char* tags = "serve";
+        tf::SessionOptions options;
+        tf::ConfigProto &config = options.config;
+        // config tensorflow
+
+
+        sess_status_ = tf::LoadSavedModel(tf::SessionOptions(options), tf::RunOptions(), export_dir, {tags}, &bundle_);
+        checkStatus(sess_status_);
+
+        session_ = bundle_.GetSession();
+
+        // extract graph_def
+        // see tf(v2.2.0) cc/saved_model/loader.cc, line 98
+        graph_def_ = bundle_.meta_graph_def.graph_def();
         /*
         int nd_count = graph_def_.node_size();
         for (int i = 0; i < nd_count; i++ )
@@ -190,8 +230,7 @@ public:
             auto node = graph_def_.node(i);
             std::cout << "Names: " << node.name() << std::endl;
         }
-         */
-
+        */
     }
 
     FutureType Run(InputTensors& inputs, OutputTensors& outputs,
@@ -219,7 +258,9 @@ public:
                 );
                 return status;
             }
+            LOG(INFO) << "enter into TF engine handler...";
             status = session_->Run(*input_tensors_, output_tensor_names, target_node_names, output_tensors_);
+            LOG(INFO) << "complete running the graph...";
             checkStatus(status);
             LOG(INFO) << base::logging::format(
                     "[%s.%s] <output_tensor> number: %d", CLASS_NAME.c_str(), METHOD_NAME.c_str(), output_tensors_->size()
@@ -247,7 +288,7 @@ public:
     }
 
 protected:
-    // @todo : TODO
+    // @todo : TODO(move logics in TF_MRCNN_SemanticFeatureExtractor::detect here so to maintain the software coherence)
     virtual void HandleInference() override {
 
     }
@@ -255,6 +296,7 @@ protected:
     tf::Session* session_;
     tf::Status sess_status_;
     tf::GraphDef graph_def_;
+    tf::SavedModelBundle bundle_;
     tf::Status graph_status_;
     // I/O Tensors
     InputTensors* input_tensors_;

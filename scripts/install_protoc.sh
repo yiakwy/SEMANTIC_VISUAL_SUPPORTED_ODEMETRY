@@ -4,7 +4,8 @@ ROOT="$( cd "$( dirname ${BASH_SOURCE[0]} )/.." && pwd )"
 # "loading libraries"
 source "${ROOT}/scripts/utils.sh"
 
-VENDOR_DIR="${ROOT}/vendor/github.com"
+VENDOR_DIR="${ROOT}/vendors/github.com"
+VERSION="3.11.1"
 
 function Ubuntu_()
 {
@@ -23,15 +24,17 @@ function Ubuntu_()
   num_cores=32
   fi
 
-  if which protoc > /dev/null; then
+  if which protoc > /dev/null && [ $(protoc --version | head -n1 | cut -d" " -f4) -lt $VERSION ]; then
     info "protoc has been installed"
   else
     info "installing protoc ..."
-    PROTOC_PKG="https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protobuf-all-3.6.1.tar.gz"
+    PROTOC_PKG="https://github.com/protocolbuffers/protobuf/releases/download/v$VERSION/protobuf-all-$VERSION.tar.gz"
+    if [ ! -f ${VENDOR_DIR}/protobuf-all-$VERSION.tar.gz ]; then
     wget $PROTOC_PKG -P ${VENDOR_DIR}
+    fi
     cd ${VENDOR_DIR}
-    tar -zxvf protobuf-all-3.6.1.tar
-    mv protobuf-all-3.6.1.tar protobuf
+    tar -zxvf protobuf-all-$VERSION.tar.gz
+    mv protobuf-$VERSION protobuf
     cd protobuf
     ./configure
     make -j${num_cores}

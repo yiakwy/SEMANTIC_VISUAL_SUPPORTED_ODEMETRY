@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set -e
+set -e
 
 if [ ! -d ${PROJECT_ROOT} ]; then 
 ROOT=${PROJECT_ROOT}
@@ -25,6 +25,11 @@ sudo apt install -y \
 declare -a pkgs=(
 # opencv4 use qt-5 (linux or macos) or gtk (linux)
 "libgtk-3-dev" 
+"libv4l-dev"
+"libxvidcore-dev"
+"libx264-dev"
+"gfortran"
+"openexr"
 )
 
 INSTALLER=apt-get
@@ -45,7 +50,7 @@ fi
 # we need to rebuild cmake
 cmake_pkg_source="https://cmake.org/files/v3.9/cmake-3.9.0.tar.gz"
 if [ ! -f ${VENDOR_ROOT}/cmake-3.9.0.tar.gz ]; then
-wget --no-check-certificate ${cmake_pkg_source} -O ${VENDOR_ROOT}/
+wget --no-check-certificate ${cmake_pkg_source} -P ${VENDOR_ROOT}/
 
 cd ${VENDOR_ROOT}
 tar -zxvf cmake-3.9.0.tar.gz
@@ -57,6 +62,19 @@ cd ${ROOT}
 fi
 
 # build opencv
+opencv4_pkg_source="https://github.com/opencv/opencv/archive/4.2.0.tar.gz"
+opencv4_contrib_source="https://github.com/opencv/opencv_contrib/archive/4.2.0.tar.gz"
+if [ ! -d ${VENDOR_ROOT}/opencv ]; then
+    if [ ! -f ${VENDOR_ROOT}/opencv-4.2.0.tar.gz ]; then
+        wget --no-check-certificate ${opencv4_pkg_source} -O ${VENDOR_ROOT}/opencv-4.2.0.tar.gz
+	wget --no-check-certificate ${opencv4_contrib_source} -O ${VENDOR_ROOT}/opencv_contrib-4.2.0.tar.gz
+    fi
+    cd ${VENDOR_ROOT}
+    tar -zxvf opencv-4.2.0.tar.gz
+    tar -zxvf opencv_contrib-4.2.0.tar.gz
+    mv opencv-4.2.0 opencv
+    mv opencv_contrib-4.2.0 opencv_contrib
+fi
 cd ${VENDOR_ROOT}/opencv
 # rm -r build
 mkdir -p build
@@ -80,6 +98,7 @@ args=(
 "-DWITH_OPENGL=ON"
 # PYTHON 3 BUNDLE SUPPORT
 "-DBUILD_opencv_python3=ON"
+"-DHAVE_opencv_python3=ON" # Freshly added, see cmake file for details
 "-DPYTHON3_EXECUTABLE=$(which python)"
 "-DPYTHON_DEFAULT_EXECUTABLE=$(which python)"
 "-DHAVE_opencv_python3=ON"
@@ -93,7 +112,7 @@ np;print(np.get_include())")"
 )
 
 cmake .. "${args[@]}"
-make -j${num_cores}
+make -j${num_cores} && sudo make install
 
 # setup cv python
 source setup_vars.sh

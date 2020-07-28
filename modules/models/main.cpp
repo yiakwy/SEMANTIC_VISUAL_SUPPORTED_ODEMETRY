@@ -112,7 +112,7 @@ int main(int argc, const char** argv)
         tf::Status status = fut.get();
         if (status.ok()) {
             if (outputs.size() == 0) {
-                LOG(INFO) << format("[Main] Found no output: %s!", graph_def.c_str(), status.ToString().c_str());
+                LOG(INFO) << format("[Main] Found no output through <%s>: %s!", graph_def.c_str(), status.ToString().c_str());
                 return -1;
             }
             LOG(INFO) << format("[Main] Success: infer through <%s>!", graph_def.c_str());

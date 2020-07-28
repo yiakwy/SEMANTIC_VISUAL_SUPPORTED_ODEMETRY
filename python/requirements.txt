@@ -1,4 +1,5 @@
 # py36
+
 # The orginal work was developed upon tensorflow-gpu==1.8
 # However this machine is equiped with libcuda.10.1 and 
 # tensorlfow-gpu==1.8 always seeks for libcuda.9.0. We also
@@ -6,6 +7,7 @@
 # are no longer valid. Finally we just update our codes to use 
 # tensorflow 2.0 with 1.x compatible interface.
 tensorflow-gpu
+
 keras
 matplotlib
 notebook
@@ -13,16 +15,38 @@ pandas
 sklearn
 pandas
 numpy
+
 # New!
 jupyterlab
+
 # proto
 protobuf==3.11.1
+
 grpcio-tools
+
 # cmd
 prompt_toolkit
+
 # pyopengl
 PyOpenGL
 PyOpenGL_accelerate
+
 # slam evaluation toolkit
 evo
 # icp (G-ICP) development toolkit
+
+# install additional dependencies: codes snippet from notebook/semantic_track.ipynb
+folium==0.2.1 # downgrade from 0.8.3 to 0.2.1 to meet requirement of tensorflow-2.x
+setuptools
+wheel
+Cython
+PyYAML
+
+# This is the exact version I tested otherwise you would encounter problems, see issue#1820 in repo Mask_RCNN
+keras==2.3.1
+
+#
+tensorboard
+
+scikit-image
+imgaug
