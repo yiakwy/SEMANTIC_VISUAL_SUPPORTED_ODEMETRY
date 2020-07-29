@@ -79,7 +79,7 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 # Eigen
 # Tensorflow 2.2.rc uses modified version Eigen 3.3.9 maintained by bazel compilation system
 # set (Eigen_INSTALL "/usr/local/include/eigen3")
-set (Eigen_INSTALL "/home/yiakwy/.cache/bazel/_bazel_yiakwy/729cb3000927cd0e322e439998a82145/external/eigen_archive")
+# set (Eigen_INSTALL "/home/yiakwy/.cache/bazel/_bazel_yiakwy/729cb3000927cd0e322e439998a82145/external/eigen_archive")
 find_package(Eigen3 3.3.9 REQUIRED)
 # Eigen delivers Eigen3Config.cmake since V3.3.3
 # Modern way CMake dependencies

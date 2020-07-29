@@ -5,7 +5,7 @@ file(MAKE_DIRECTORY ${PROTO_CODEC})
 
 # Find Protobuf installation
 set (protobuf_MODULE_COMPATABLE TRUE)
-set (Protobuf_PROTOC_EXECUTABLE "/usr/local/bin/protoc") # defaults to protoc-3.11.1, now changed to protoc-3.8.0
+set (Protobuf_PROTOC_EXECUTABLE "/usr/local/bin/protoc") # defaults to protoc-3.11.1, now downgraded to protoc-3.8.0 to meet requirements of tensorflow
 
 # set (Protobuf_PROTOC_EXECUTABLE "/usr/bin/protoc") # defaults to protoc-3.0.0
 # include(FindProtobuf)
@@ -110,7 +110,7 @@ endfunction()
 echo("Protobuf_PROTOC_EXECUTABLE: ${Protobuf_PROTOC_EXECUTABLE}")
 if (Protobuf_PROTOC_EXECUTABLE)
   if (NOT TARGET protobuf::protoc)    
-    add_executable(protobuf::protoc IMPORTED)
+    add_executable(protobuf::protoc IMPORTED ../python/svso.cpp)
     if (EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
       set_target_properties(protobuf::protoc PROPERTIES
         IMPORTED_LOCATION "${Protobuf_PROTOC_EXECUTABLE}")
