@@ -1,4 +1,4 @@
-## Why and How do we have Tensorflow Inference Engine
+## Why and how do we have Tensorflow Inference Engine
 
 Typically there are plentfy of ways to run deep learning models and blend them into industrial softwares.   
 

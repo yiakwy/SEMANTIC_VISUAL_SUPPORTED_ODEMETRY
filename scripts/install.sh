@@ -80,7 +80,9 @@ else
   curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
   sudo apt-get install -y nodejs
   mkdir -p ~/.npm
-  sudo chown -R $USER ~/.npm
+  (sudo chown -R $USER ~/.npm) || {
+	  err "does not work! (use 'chown' in docker)"   
+  }
   npm config set unsafe-perm=true
 fi
 

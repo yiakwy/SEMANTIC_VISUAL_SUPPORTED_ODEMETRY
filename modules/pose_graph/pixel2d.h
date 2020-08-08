@@ -6,9 +6,5 @@
 #define SEMANTIC_RELOCALIZATION_PIXEL2D_H
 
 
-class pixel2d {
-
-};
-
 
 #endif //SEMANTIC_RELOCALIZATION_PIXEL2D_H

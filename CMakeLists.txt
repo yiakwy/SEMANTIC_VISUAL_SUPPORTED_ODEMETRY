@@ -129,9 +129,12 @@ configure_file(config/env_config.h.in
 include_directories(config)
 include_directories(modules)
 # just for header files and libraries references
-include_directories(vendor)
+include_directories(vendors)
 
 add_subdirectory(${SRCS_ROOT})
+# add pysvso (python implementation of svso) and python bindings to svso core c++ libraries
+add_subdirectory(cmake/pybind11)
+add_subdirectory(${ROOT}/python)
 
 # passed by cmake flags
 if (GTEST)

@@ -7,11 +7,11 @@ echo ("hw_proto_srcs: ${hw_proto_srcs}")
 echo ("hw_proto_hdrs: ${hw_proto_hdrs}")
 echo ("PROTOBUF_INCLUDE_DIRS: ${PROTOBUF_INCLUDE_DIRS}")
 echo ("PROTOBUF_LIBRARIES: ${PROTOBUF_LIBRARIES}")
-add_library(base SHARED 
+add_library(${PROJECT_NAME} SHARED
         ${FILES}
         ${hw_proto_srcs}
         ${hw_proto_hdrs})
-set_target_properties(base PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${LIB_LINKER_FLAGS})
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${LIB_LINKER_FLAGS})
 target_include_directories(${PROJECT_NAME}
         PUBLIC
         ${EIGEN3_INCLUDE_DIRS}

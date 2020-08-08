@@ -6,7 +6,7 @@
 #define SEMANTIC_RELOCALIZATION_MAPBLOCK_H
 
 
-class mapblock {
+class RuntimeBlock {
 
 };
 

@@ -39,7 +39,11 @@ alt="framework" width="240" height="180" border="10" />
 
 More technical details about data stucture, system design and algorithms can be found at the public report [SVSO](https://drive.google.com/uc?export=view&id=1XWf_esVG2gso-aZVtplwyTEWV8a8iSFa).
 
-## Installation
+## Install and Debug From Docker
+
+see "docs/install_and_debug_from_docker.md"
+
+## Install From Source
 
 ### Dependencies
 
@@ -51,7 +55,7 @@ tensorflow inside "${ROOT}/vendors/github.com/tensorflow_cc/tensorflow_cc/tensor
 
 The default system is built upon `Ubuntu 18.04` but other verions are also possible to be sopported. The hardware includes a physical GeForce RTX GPU (compute ability 7.5) and monocular camera with a workable scale advisor device. 
 
-According to the NV website and our tests, `cuda 10.1`, `cudnn` 7.6.5 is just enough. At the beginning, I choose MASK-RCNN pre-trained with coco dataset for POC. You can change the model to lighter one to compute semantic features for instances. In our tests, the features are not distinguwshable from objects with the same label, hence we use
+According to the NV website and our tests, `cuda 10.2`, `cudnn` 7.6.5 is just enough. At the beginning, I choose MASK-RCNN pre-trained with coco dataset for POC. You can change the model to lighter one to compute semantic features for instances. In our tests, the features are not distinguwshable from objects with the same label, hence we use
 **UIoU** I invented last year in ROI matching procesure \(see `ROIMatcher`\) to keep track of identified objects.  
 
 ### Step1: Build general dependencies of the project 
@@ -118,31 +122,73 @@ protobuf will be used by the cmake based project to build transportation layer o
 First fetch sources of third party projects specified in ".gitmodules". You might encounter "git clone" problems using `git submodure init` command
 . If that happens, download latest released sources `*.tar.gz` in whatever method that you feel good and extract them to the vendors location.
 
-Then simple run
+After add git submoduels, 
 
-> bash scripts/build_ceres.sh
+```
+git submodule add -f ${Pangolin_Git_Repo} vendors/github.com/pangolin
+git submodule add -f ${Ceres_Solver_Git_Repo} vendors/github.com/ceres-solver
+# note we not goint to include opence as submodules since it is too large and we have many problems to clone it directly
+```
+
+then simple run
+
+> bash scripts/build_ceres.sh (Optional)
 > bash scripts/build_g2o.sh
+> bash scripts/build_g2opy.sh (Generate py bindings to be used in python)
 > bash scripts/build_pangolin.sh
 
 Ceres relies on Eigen-3.3.3 where tensorflow 2.2.0-rc we are going to build uses patched eigen 3.3.9 mainted by
 bazel system. To avoid conflicts I modified our `cmake/Modules/FindEigen3.cmake` to a version of bazel installed recorded in
 `tensorflow/workspace.bzl` you can also find the library in `~/.cache/bazel/_bazel_${USER}/external/${HASH_CODE}/eigen_archive` [3]
 
-##### Step 5-3: Build tensorflow c++ runtime from source code
+Also make sure that no eigen3 copies installed in the path of higher priority than the above path : "/usr/include/eigen3", "/usr/include/eigen3"
+
+##### Step 5-3: Build tensorflow c++ runtime (v2.2.0-rc)  from source code
 
 Tensorflow is extremely large. First you need to build bazel then build shared library so that you can use it in our cmake project.
 Building Tensorflow with Bazel might take at least 45 minutes \(tensorflow build time\) and up to 3 ~ 4 hours (bazel fetches dependencies).
 The process is dependant on your network status.
 
+The key issues tensorflow pull its own distribution of protobuffers \(3.8.1\) and eigen \(3.3.9\). These key information is stored in bazel file "tensorflow/workspace.bzl".
+
+If any mismatch happens, checkout the tensorflow bazel file to see if any dependancies out of date and use the scripts provided by use to install the proper one.
+
 > bash scipts/build_tensorflow.sh
 
 If script does not work \(due to your network proxy, git ssh configuration, git cache setting and many other reasons\), here are the procedures to do:
 
-1) go to [tensorflow_cmake](https://github.com/cjweeks/tensorflow-cmake/blob/master/README.md) and follow the instructions. Note
+1) open "vendors/github.com/tensorflow_cc/tensorflow_cc/cmake/TensorflowBase.cmake" and modify:
 
-Since bazel consumes a large portion of memories \[1\]\[2\] which could break your building process, replace bazel build command with the following one:
+```
+ExternalProject_Add(
+  tensorflow_base
 
-> sudo bazel build --jobs=8 --config=monolithic tensorflow:libtensorflow_all.so
+## Replace git repotory to released archived files 
+
+  # GIT_REPOSITORY https://github.com/tensorflow/tensorflow.git
+  # GIT_TAG "${TENSORFLOW_TAG}"
+
+  URL https://github.com/tensorflow/tensorflow/archive/${TENSORFLOW_TAG}.tar.gz  
+
+  TMP_DIR "/tmp"
+  STAMP_DIR "tensorflow-stamp"
+  # DOWNLOAD_DIR "tensorflow"
+  SOURCE_DIR "tensorflow"
+  BUILD_IN_SOURCE 1
+  UPDATE_COMMAND ""
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND "${CMAKE_CURRENT_BINARY_DIR}/build_tensorflow.sh"
+  INSTALL_COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/cmake/copy_links.sh" bazel-bin
+)
+```
+where $TENSORFLOW_TAG defined in "tensorflow_cc/cmake/CMakefile.cmake"
+
+2) since bazel consumes a large portion of memories \[1\]\[2\] which could break your building process, replace bazel build command with the following one:
+
+```
+# tensorflow_cc/cmake/build_tensorflow.sh.in
+sudo bazel build --jobs=8 --config=monolithic tensorflow:libtensorflow_all.so
+```
 
 ## Data
 
