@@ -41,3 +41,15 @@ vendors/
 
 data/ 
 log/
+
+# Gitbook generated files
+_book
+*.epub
+*.mobi
+*.pdf
+
+# Documentation generated files
+
+# Docker
+docker/cudnn-10.2-linux-x64-v7.6.5.32.tgz
+docker/NVIDIA-Linux-x86_64-440.100.run

@@ -16,3 +16,6 @@
 [submodule "vendors/github.com/Mask_RCNN"]
 	path = vendors/github.com/Mask_RCNN
 	url = https://github.com/matterport/Mask_RCNN.git
+[submodule "vendors/github.com/Paddle"]
+	path = vendors/github.com/Paddle
+	url = https://github.com/PaddlePaddle/Paddle.git
