@@ -1,0 +1,53 @@
+{
+    "output": null,
+    "generator": "site",
+    "title": "svso documentation",
+    "description": null,
+    "extension": null,
+    "plugins": [],
+    "pluginsConfig": {
+        "fontSettings": {
+            "theme": "night",
+            "family": "serif",
+            "size": 1
+        }
+    },
+    "variables": {},
+
+    "links": {
+    	"sidebar": {
+    	    "Author of SVSO": "Lei Wang(yiakwy@gmail.com)",
+	    "OpenHDMap Group": "www.openhdmap.org"
+    	},
+
+        "sharing": {
+            "google": null,
+            "facebook": null,
+            "twitter": null,
+            "weibo": null,
+            "all": null
+        }
+    },
+
+
+    "pdf": {
+        "pageNumbers": false,
+
+        "fontSize": 12,
+
+        "paperSize": "a4",
+
+        "margin": {
+            "right": 62,
+            "left": 62,
+            "top": 36,
+            "bottom": 36
+        },
+
+        "headerTemplate": null,
+
+        "footerTemplate": null
+    }
+}
+
+

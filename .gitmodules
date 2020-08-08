@@ -1,9 +1,21 @@
-[submodule "Pangolin"]
-  path = vendors/github.com/Pangolin
-  url = https://github.com/stevenlovegrove/Pangolin.git
-[submodule "opencv"]
-  path = vendors/github.com/opencv
-  url = https://github.com/opencv/opencv.git
-[submodule "opencv_contrib"]
-  path = vendors/github.com/opencv_contrib
-  url = https://github.com/opencv/opencv_contrib.git
+[submodule "vendors/github.com/ceres-solver"]
+	path = vendors/github.com/ceres-solver
+	url = https://github.com/ceres-solver/ceres-solver.git
+[submodule "vendors/github.com/Pangolin"]
+	path = vendors/github.com/Pangolin
+	url = https://github.com/stevenlovegrove/Pangolin.git
+[submodule "vendors/github.com/g2o"]
+	path = vendors/github.com/g2o
+	url = https://github.com/RainerKuemmerle/g2o.git
+[submodule "vendors/github.com/g2opy"]
+	path = vendors/github.com/g2opy
+	url = https://github.com/uoip/g2opy.git
+[submodule "vendors/github.com/coco"]
+	path = vendors/github.com/coco
+	url = https://github.com/waleedka/coco
+[submodule "vendors/github.com/Mask_RCNN"]
+	path = vendors/github.com/Mask_RCNN
+	url = https://github.com/matterport/Mask_RCNN.git
+[submodule "vendors/github.com/Paddle"]
+	path = vendors/github.com/Paddle
+	url = https://github.com/PaddlePaddle/Paddle.git

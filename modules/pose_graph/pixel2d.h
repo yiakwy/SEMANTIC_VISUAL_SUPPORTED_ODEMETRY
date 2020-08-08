@@ -1,0 +1,14 @@
+//
+// Created by yiak on 2020/7/29.
+//
+
+#ifndef SEMANTIC_RELOCALIZATION_PIXEL2D_H
+#define SEMANTIC_RELOCALIZATION_PIXEL2D_H
+
+
+class pixel2d {
+
+};
+
+
+#endif //SEMANTIC_RELOCALIZATION_PIXEL2D_H

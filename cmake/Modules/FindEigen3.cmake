@@ -47,7 +47,7 @@ unset(EIGEN3_FOUND)
 # /usr/include/eigen3, ceres depended eigen 
 # /usr/local/include/eigen3/, extracted from bazel archive
 # set(EIGEN3_INCLUDE_DIR "/usr/local/include/eigen3")
-set (EIGEN3_INCLUDE_DIR "/home/yiakwy/.cache/bazel/_bazel_yiakwy/729cb3000927cd0e322e439998a82145/external/eigen_archive")
+set (EIGEN3_INCLUDE_DIR "/home/yiak/.cache/bazel/_bazel_yiak/3a9860bf2dd6115a1f3a2f621e74b511/external/eigen_archive")
 _eigen3_check_version()
 set(EIGEN3_FOUND ${EIGEN3_VERSION_OK})
 

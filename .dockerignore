@@ -1,0 +1,39 @@
+#
+# .git
+
+#
+# .dockerignore
+
+# !important
+docker/
+!docker/scripts/test_network_connectivity.sh
+!docker/scripts/init_python.sh
+
+# around 9GB
+vendors/
+!vendors/github.com/coco
+!vendors/github.com/Mask_RCNN
+
+# NODE
+node_modules/
+package-lock.json
+package.json
+
+# IDE - VIM
+*.swp
+
+# IDE - CLION
+
+# IDE - PyCharm
+.idea/
+
+# IDE - Xcode
+xcode/
+
+# Data files
+*.tar.gz
+
+# around 2 GB
+data/
+# around 1 GB
+log/
