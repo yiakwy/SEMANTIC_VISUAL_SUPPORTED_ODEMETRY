@@ -43,7 +43,9 @@ data/
 log/
 
 # Gitbook generated files
-_book
+pedia/_book
+pedia/docs
+pedia/README.md 	
 *.epub
 *.mobi
 *.pdf

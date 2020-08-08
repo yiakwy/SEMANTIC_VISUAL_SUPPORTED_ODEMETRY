@@ -631,6 +631,35 @@ def export_mrcnn_tf_graph(mrcnn, export_path):
     mrcnn.compile(0.001, 0.9)
     tf.saved_model.save(new_model, export_path)
 
+# @see https://stackoverflow.com/questions/45466020/how-to-export-keras-h5-to-tensorflow-pb
+def freeze_session(session, keep_var_names=None, output_names=None, clear_devices=True):
+    """
+    Freezes the state of a session into a pruned computation graph.
+
+    Creates a new computation graph where variable nodes are replaced by
+    constants taking their current value in the session. The new graph will be
+    pruned so subgraphs that are not necessary to compute the requested
+    outputs are removed.
+    @param session The TensorFlow session to be frozen.
+    @param keep_var_names A list of variable names that should not be frozen,
+                          or None to freeze all the variables in the graph.
+    @param output_names Names of the relevant graph outputs.
+    @param clear_devices Remove the device directives from the graph for better portability.
+    @return The frozen graph definition.
+    """
+    graph = session.graph
+    with graph.as_default():
+        freeze_var_names = list(set(v.op.name for v in tf.global_variables()).difference(keep_var_names or []))
+        output_names = output_names or []
+        output_names += [v.op.name for v in tf.global_variables()]
+        input_graph_def = graph.as_graph_def()
+        if clear_devices:
+            for node in input_graph_def.node:
+                node.device = ""
+        frozen_graph = tf.graph_util.convert_variables_to_constants(
+            session, input_graph_def, output_names, freeze_var_names)
+        return frozen_graph
+
 # @todo TODO (status: not safe to use)
 def save_model(model, export_path, no_custom_op=False):
     if os.path.isdir(export_path):
@@ -659,13 +688,15 @@ def save_model(model, export_path, no_custom_op=False):
         # once you build tensorflow from source (see docs/install/build_tensorflow_from_source.md), you will have binary named 'save_model_cli'
         #   save_model_cli show --dir log/models/coco/mrcnn --all
         # gives you the runtime name of target operators.
-        target_node_names = ["mrcnn_detection/Reshape_1:0", "mrcnn_class/Reshape_1:0", "mrcnn_bbox/Reshape:0", "mrcnn_mask/Reshape_1:0", "ROI/packed_2:0", "rpn_class/concat:0", "rpn_bbox/concat:0"]
 
+        # deprecated, the names not valid for tensorflow
+        target_node_names = [op.name for op in model.keras_model.outputs]
     else:
+
         target_node_names = ["detections", "mrcnn_class", "mrcnn_bbox", "mrcnn_mask", "rois", "rpn_class", "rpn_bbox"]
 
-    target_node_names = [ "output_" + name for name in target_node_names ];
-    pred = [tf.identity(model.keras_model.outputs[i], name = target_node_names[i]) for i in range(len(target_node_names))]
+    target_node_names = [ "output_" + name for name in target_node_names ]
+    [tf.identity(model.keras_model.outputs[i], name = target_node_names[i]) for i in range(len(target_node_names))] # add to tensorflow graph
 
     if is_tf_1():
         Session = K.get_session
@@ -690,18 +721,24 @@ def Program(raw_args):
     # export_mrcnn_tf_graph(sfe.get_base_model(), os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_test"))
 
     # see tensorflow 2.2.0 API
-    save_model(sfe.get_base_model(), os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp"))
+    # save_model(sfe.get_base_model(), os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp"))
 
+    # see https://stackoverflow.com/questions/45466020/how-to-export-keras-h5-to-tensorflow-pb
+    K.set_learning_phase(0)
+    target_node_names = [out.op.name for out in sfe.get_base_model().keras_model.outputs]
+    [print(name) for name in target_node_names]
+    frozen_graph = freeze_session(tf.keras.backend.get_session(), output_names=target_node_names)
+    tf.train.write_graph(frozen_graph, os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp"), "mrcnn_tmp.pb", as_text=False)
 
 if __name__ == "__main__":
     # generate protobuf files of the computational graph
-    # sys.exit(Program(sys.argv[1:]))
+    sys.exit(Program(sys.argv[1:]))
 
     # test whether our methods used to save models work as expected if loaded in c++ inference engine
-    import cv2
-    img = cv2.imread(os.path.join(sfe_config.DATA_DIR, "tum/rgbd_dataset_freiburg1_xyz/rgb/1305031102.175304.png"))
-    sfe = SemanticFeatureExtractor()
-    detections = sfe.detect(img)
+    # import cv2
+    # img = cv2.imread(os.path.join(sfe_config.DATA_DIR, "tum/rgbd_dataset_freiburg1_xyz/rgb/1305031102.175304.png"))
+    # sfe = SemanticFeatureExtractor()
+    # detections = sfe.detect(img)
     #
     # base = sfe.get_base_model()
     #

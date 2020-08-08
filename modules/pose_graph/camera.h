@@ -1,0 +1,14 @@
+//
+// Created by yiak on 2020/7/29.
+//
+
+#ifndef SEMANTIC_RELOCALIZATION_CAMERA_H
+#define SEMANTIC_RELOCALIZATION_CAMERA_H
+
+
+class Camera {
+
+};
+
+
+#endif //SEMANTIC_RELOCALIZATION_CAMERA_H

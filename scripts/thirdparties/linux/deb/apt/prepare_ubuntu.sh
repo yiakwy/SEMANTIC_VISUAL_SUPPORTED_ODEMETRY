@@ -1,5 +1,5 @@
 # install build essentials in case that we compile and build gnu software
-apt-get install -y \
+sudo apt-get update && apt-get install -y \
 	build-essential \
 	llvm \
 	git \

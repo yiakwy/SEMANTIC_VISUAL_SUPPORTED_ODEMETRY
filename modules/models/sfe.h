@@ -87,7 +87,7 @@ public:
     std::string BACKBONE = "resnet101";
     // base model path, might be overridden by external flags
     std::string BASE_MODEL_DIR = "mrcnn_tmp"; // "mrcnn";
-    std::string BASE_GRAPH_DEF = "mrcnn.pb";
+    std::string BASE_GRAPH_DEF = "mrcnn_tmp.pb";
     std::string SFE_MODEL_DIR = "sfe"; // "sfe_tmp";
     std::string SFE_GRAPH_DEF = "sfe.pb";
     std::string MODEL_DIR = format(
@@ -510,7 +510,7 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
         //   ref: 1. discussion Tensorflow Github repo issue#8033
         //        2. opencv2 :
         //          2.1. grab buf: Type* buf = mat.ptr<Type>();
-        //          2.2  memcpy to the buf
+        //          2.2  memcpy cv::Mat to the buf
         //        3. Eigen::Tensor buffer :
         //          3.1 grab buf in RowMajor/ColMajor layout: tensor.data();
         //          3.2 convert using Eigen::TensorMap : Eigen::TensorMap<Eigen::Tensor<Type, NUM_DIMS>>(buf)
@@ -525,7 +525,7 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
         LOG(INFO) << "_molded_images_mapped(0,0,0,:3): " << _molded_images_mapped(0, 0, 0, 0) << " "
                   << _molded_images_mapped(0, 0, 0, 1) << ' '
                   << _molded_images_mapped(0, 0, 0, 2);
-        inputs->emplace_back("input_image:0", _molded_images);
+        inputs->emplace_back("input_image", _molded_images);
 
         tfe::Tensor _images_metas(tf::DT_FLOAT, tf::TensorShape({1, images_metas.cols() } ) );
         auto _images_metas_mapped = _images_metas.tensor<float, 2>();
@@ -533,7 +533,7 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
         {
             _images_metas_mapped(0, i) = images_metas(0, i);
         }
-        inputs->emplace_back("input_image_meta:0", _images_metas);
+        inputs->emplace_back("input_image_meta", _images_metas);
 
         tfe::Tensor _anchors(tf::DT_FLOAT, tf::TensorShape({1, anchors.rows(), anchors.cols()}));
         auto _anchors_mapped = _anchors.tensor<float, 3>();
@@ -544,18 +544,22 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
                  _anchors_mapped(0,i,j) = anchors(i,j);
             }
         }
-        inputs->emplace_back("input_anchors:0", _anchors);
+        inputs->emplace_back("input_anchors", _anchors);
 
         // @todo : TODO
         // run base_engine_ detection
         // see examples from main.cpp, usage of TensorFlowEngine
 
-        // load saved model
+        // load saved_model.pb
 //        tfe::FutureType fut = base_engine_->Run(*inputs, *outputs,
 //                                                {"mrcnn_detection/Reshape_1:0", "mrcnn_class/Reshape_1:0", "mrcnn_bbox/Reshape:0", "mrcnn_mask/Reshape_1:0", "ROI/packed_2:0", "rpn_class/concat:0", "rpn_bbox/concat:0"}, {});
-        // load saved graph
+//        // load mrcnn.pb
+//        tfe::FutureType fut = base_engine_->Run(*inputs, *outputs,
+//                                                {"output_detections:0", "output_mrcnn_class:0", "output_mrcnn_bbox:0", "output_mrcnn_mask:0", "output_rois:0", "output_rpn_class:0", "output_rpn_bbox:0"}, {});
+//        // load mrcnn_tmp.pb
         tfe::FutureType fut = base_engine_->Run(*inputs, *outputs,
-                                                {"mrcnn_detection/Reshape_1:0", "output_mrcnn_class:0", "output_mrcnn_bbox:0", "output_mrcnn_mask:0", "output_rois:0", "output_rpn_class:0", "output_rpn_bbox:0"}, {});
+                                                {"mrcnn_detection/Reshape_1:0", "mrcnn_class/Reshape_1:0", "mrcnn_bbox/Reshape:0", "mrcnn_mask/Reshape_1:0", "ROI/packed_2:0", "rpn_class/concat:0", "rpn_bbox/concat:0"}, {});
+
         // pass fut object to anther thread by value to avoid undefined behaviors
         std::shared_future<tfe::ReturnType>  fut_ref( std::move(fut) );
 
