@@ -661,7 +661,7 @@ def freeze_session(session, keep_var_names=None, output_names=None, clear_device
         return frozen_graph
 
 # @todo TODO (status: not safe to use)
-def save_model(model, export_path, no_custom_op=False):
+def save_keras_model(model, export_path, no_custom_op=False, target_node_names=None):
     if os.path.isdir(export_path):
         logging.info("%s already exits, deleting it ...")
         os.system("rm -rf %s" % export_path)
@@ -672,8 +672,8 @@ def save_model(model, export_path, no_custom_op=False):
     # ?
     K.set_learning_phase(0)
 
-    tf1_to_2 = os.path.join(export_path, "tmp.h5")
-    model.keras_model.save(tf1_to_2)
+    tf2_to_1 = os.path.join(export_path, "tmp.h5")
+    model.keras_model.save(tf2_to_1)
 
     if no_custom_op:
         # since we disable tf2 behaviors, we pass the flag manually. Caution! DO NOT USE "model.keras_model.save", this call
@@ -693,7 +693,7 @@ def save_model(model, export_path, no_custom_op=False):
         target_node_names = [op.name for op in model.keras_model.outputs]
     else:
 
-        target_node_names = ["detections", "mrcnn_class", "mrcnn_bbox", "mrcnn_mask", "rois", "rpn_class", "rpn_bbox"]
+        pass
 
     target_node_names = [ "output_" + name for name in target_node_names ]
     [tf.identity(model.keras_model.outputs[i], name = target_node_names[i]) for i in range(len(target_node_names))] # add to tensorflow graph
@@ -714,53 +714,114 @@ def save_model(model, export_path, no_custom_op=False):
 
     logging.info("saving model to %s ..." % export_path)
 
-def Program(raw_args):
+# utility to test exported graph before feed to cpp inference engine
+def TF_MRCNN_INFER(img):
+
     sfe = SemanticFeatureExtractor()
-    # it seems that I can only run one of them each time
-    # export_sfe_tf_graph(sfe, os.path.join(sfe_config.MODEL_PATH, "coco/sfe"))
-    # export_mrcnn_tf_graph(sfe.get_base_model(), os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_test"))
 
-    # see tensorflow 2.2.0 API
-    # save_model(sfe.get_base_model(), os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp"))
+    def detect(sfe, img):
+        # mold images
+        molded_images, image_metas, windows = sfe._base_model.mold_inputs([img])
 
-    # see https://stackoverflow.com/questions/45466020/how-to-export-keras-h5-to-tensorflow-pb
-    K.set_learning_phase(0)
-    target_node_names = [out.op.name for out in sfe.get_base_model().keras_model.outputs]
-    [print(name) for name in target_node_names]
-    frozen_graph = freeze_session(tf.keras.backend.get_session(), output_names=target_node_names)
-    tf.train.write_graph(frozen_graph, os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp"), "mrcnn_tmp.pb", as_text=False)
+        # get anchors
+        config = sfe._base_model.config
+        anchors = sfe._base_model.get_anchors(molded_images[0].shape)
+        anchors = np.broadcast_to(anchors, (config.BATCH_SIZE,) + anchors.shape)
+
+        target_node_names = [out.op.name for out in sfe.get_base_model().keras_model.outputs]
+
+        if is_tf_1():
+            gfile = tf.gfile
+        else:
+            gfile = tf.io.gfile
+
+        with tf.Graph().as_default() as graph:
+            with tf.Session(graph=graph).as_default() as sess:
+                with gfile.GFile(os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp/mrcnn.pb"), 'rb') as f:
+                    graph_def = tf.GraphDef()
+                    # I/O event
+                    graph_def.ParseFromString(f.read())
+                    # sess.graph.as_default()
+                    tf.import_graph_def(graph_def, name='')
+                    #
+                    [print("Tensor name : {}\n      value: {}".format(op.name, op.values())) for op in graph.get_operations()]
+                    # @todo TODO(run test)
+
+                graph = tf.get_default_graph()
+                output_tensors = []
+                for i, op_name in enumerate(target_node_names):
+                    output_tensors.append(graph.get_tensor_by_name(op_name + ":{}".format(0) ))
+                    print(output_tensors[len(output_tensors)-1])
+
+                detectionResult = sess.run(output_tensors, feed_dict={
+                    "input_image:0": molded_images,
+                    "input_image_meta:0": image_metas,
+                    "input_anchors:0": anchors
+                })
+
+                print("DetectionResult shape:", detectionResult[0].shape)
+                print("DetectionResult sample:", detectionResult[0][0,0,:])
+
+                return detectionResult
+
+                pass
+            pass
+
+    try:
+        detectionResult = detect(sfe, img)
+    except Exception as e:
+        print(e)
+        return False
+
+    # @todo : TODO
+
+    return True
+
+def Program(raw_args, format='SavedModel'):
+    sfe = SemanticFeatureExtractor()
+    if format == 'SavedModel':
+        # it seems that I can only run one of them each time
+        export_sfe_tf_graph(sfe, os.path.join(sfe_config.MODEL_PATH, "coco/sfe"))
+        export_mrcnn_tf_graph(sfe.get_base_model(), os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_test"))
+
+    elif format == 'StaticGraph':
+
+        target_node_names = [out.op.name for out in sfe.get_base_model().keras_model.outputs]
+
+        # for test purpose
+        # see tensorflow 2.2.0 API
+        if not is_tf_1():
+            save_keras_model(sfe.get_base_model(), os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp"), target_node_names=target_node_names)#["detections", "mrcnn_class", "mrcnn_bbox", "mrcnn_mask", "rois", "rpn_class", "rpn_bbox"])
+        else:
+            # see https://stackoverflow.com/questions/45466020/how-to-export-keras-h5-to-tensorflow-pb
+            K.set_learning_phase(0)
+
+            [print(name) for name in target_node_names]
+            frozen_graph = freeze_session(tf.keras.backend.get_session(), output_names=target_node_names)
+            tf.train.write_graph(frozen_graph, os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp"), "mrcnn_tmp.pb", as_text=False)
+    else:
+        raise Exception("The model exportation format is limited to choices of [%s %s]" % ('SavedModel', 'StaticGraph'))
 
 if __name__ == "__main__":
     # generate protobuf files of the computational graph
-    sys.exit(Program(sys.argv[1:]))
+    # sys.exit(Program(sys.argv[1:], format='StaticGraph'))
 
     # test whether our methods used to save models work as expected if loaded in c++ inference engine
-    # import cv2
-    # img = cv2.imread(os.path.join(sfe_config.DATA_DIR, "tum/rgbd_dataset_freiburg1_xyz/rgb/1305031102.175304.png"))
-    # sfe = SemanticFeatureExtractor()
-    # detections = sfe.detect(img)
+    import cv2
+    img = cv2.imread(os.path.join(sfe_config.DATA_DIR, "tum/rgbd_dataset_freiburg1_xyz/rgb/1305031102.175304.png"))
+    sfe = SemanticFeatureExtractor()
+
+    # test passed!
+    detections = sfe.detect(img[:,:,::-1])
     #
     # base = sfe.get_base_model()
     #
     # # base.keras_model = tf.keras.models.load_model(os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp"))
-    # if is_tf_1():
-    #     Session = K.get_session
-    #     gfile = tf.gfile
-    # else:
-    #     Session = tf.keras.backend.get_session # tf.Session
-    #     gfile = tf.io.gfile
-    # with tf.Session() as sess:
-    #     with gfile.GFile(os.path.join(sfe_config.MODEL_PATH, "coco/mrcnn_tmp/mrcnn.pb"), 'rb') as f:
-    #         graph_def = tf.GraphDef()
-    #         # I/O event
-    #         graph_def.ParseFromString(f.read())
-    #         sess.graph.as_default()
-    #         tf.import_graph_def(graph_def, {})
-    #         #
-    #         [print(n.name) for n in graph_def.node]
-    #         # @todo TODO(run test)
-    #
-    #     pass
+
     # does not work with restored keras model
     # detections = base.detect([img])
+
+    # test passed!
+    # TF_MRCNN_INFER(img)
+
     pass

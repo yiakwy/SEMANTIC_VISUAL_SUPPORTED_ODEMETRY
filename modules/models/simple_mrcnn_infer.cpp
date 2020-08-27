@@ -83,7 +83,7 @@ int main(int argc, const char** argv) {
 
     tfe::InputTensors inputs;
     tfe::OutputTensors outputs;
-    std::vector<TF_MRCNN_SemanticFeatureExtractor::DetectronResult> results;
+    std::vector<TF_MRCNN_SemanticFeatureExtractor::DetectronResult> results;~
 
     // infer !
     tfe::FutureType fut = sfe->detect(img, &inputs, &outputs, results);

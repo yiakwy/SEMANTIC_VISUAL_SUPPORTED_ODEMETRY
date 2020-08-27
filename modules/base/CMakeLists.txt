@@ -10,7 +10,7 @@ echo ("PROTOBUF_LIBRARIES: ${PROTOBUF_LIBRARIES}")
 add_library(${PROJECT_NAME} SHARED
         ${FILES}
         ${hw_proto_srcs}
-        ${hw_proto_hdrs})
+        ${hw_proto_hdrs} io_base/btree_accessor.cpp io_base/btree_accessor.h io_base/io.cpp io_base/io.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${LIB_LINKER_FLAGS})
 target_include_directories(${PROJECT_NAME}
         PUBLIC
