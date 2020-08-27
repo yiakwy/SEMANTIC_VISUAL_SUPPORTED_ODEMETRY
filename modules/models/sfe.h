@@ -162,7 +162,7 @@ static void eigen_2_tensor(const tf::Tensor& t, Eigen::Tensor<Type, NUM_DIMS>& e
 template <typename Scalar, int NUM_DIMS, int LAYOUT>
 static void eigen_tensor_2_matrix(const Eigen::Tensor<Scalar, NUM_DIMS, LAYOUT>& t, Eigen::MatrixX<Scalar>& matrix, int ROWS, int COLS)
 {
-    matrix = Eigen::Map<const Eigen::MatrixX<Scalar>> (t.data(), ROWS, COLS);
+    matrix = Eigen::Map<const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, LAYOUT>> (t.data(), ROWS, COLS);
 }
 
 // == Transplant Mask-RCNN utility codes to mold input images for neural network ==
@@ -332,8 +332,8 @@ public:
             //  3. we prefer lazy decoding and more often this is executed by another thread asynchronously
             // i.e. :
             //
-            cv::imshow("molded_img", molded_img);
-            cv::waitKey(0);
+            // cv::imshow("molded_img", molded_img);
+            // cv::waitKey(0);
             LOG(INFO) << "first pixel value(completed):" << std::endl << molded_img.at<cv::Vec3f>(0,0);
 #endif
             Eigen::Vector3i ori_shape{img.rows, img.cols, 3};
@@ -396,7 +396,7 @@ public:
         }
 
         // reserve memory for anchors
-        assert (N == 261888);
+        // assert (N == 261888);
         anchors.resize(N, 4);
 
         size_t j=0;
@@ -439,11 +439,31 @@ public:
     // detection results
     class DetectronResult {
     public:
+        using Type = DetectronResult;
 
         Eigen::MatrixX<float> rois;
         std::vector<int> class_ids;
         std::vector<double> scores;
-        std::vector<Eigen::MatrixX<bool>> mask;
+        std::vector<Eigen::MatrixX<int>> mask;
+
+        Type filter(const std::vector<int>& excluded_ids) {
+            Type ret;
+            size_t size = rois.rows() - excluded_ids.size();
+            ret.rois.resize(size, rois.cols());
+            for (int i=0; i < size; i++)
+            {
+                size_t idx = i;
+                if (std::binary_search(excluded_ids.begin(), excluded_ids.end(), idx)) {
+                    continue;
+                }
+
+                ret.rois.row(i) = rois.row(idx);
+                ret.class_ids.push_back(class_ids[idx]);
+                ret.scores.push_back(class_ids[idx]);
+                ret.mask.push_back(mask[idx]);
+            }
+            return ret;
+        }
     };
 
     // @todo : TODO
@@ -476,8 +496,8 @@ public:
         molded_shape << molded_images.dimension(1), molded_images.dimension(2), 3;
         Eigen::MatrixXd anchors = std::move( get_anchors(molded_shape) );
 #ifndef NDEBUG
-        Eigen::MatrixXd tmp = anchors.block<10,4>(0, 0);
-      LOG(INFO) << "anchors(cpp computed):" << std::endl << eigen_utils::Eigen::pretty_print( tmp );
+        // Eigen::MatrixXd tmp0 = anchors.block(0, 0, 10, 4);
+      LOG(INFO) << "anchors(cpp computed):" << std::endl << eigen_utils::Eigen::pretty_print( anchors.block(0, 0, 10, 4) );
       LOG(INFO) << "python anchors snapshot(DEBUG):" << R"(
 Out[1]:
 array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
@@ -515,8 +535,8 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
         //          3.1 grab buf in RowMajor/ColMajor layout: tensor.data();
         //          3.2 convert using Eigen::TensorMap : Eigen::TensorMap<Eigen::Tensor<Type, NUM_DIMS>>(buf)
         //  _molded_images_mapped = Eigen::TensorMap<Eigen::Tensor<float, 4, Eigen::RowMajor>>(&data[0], 1, molded_shape_H, molded_shape_W, 3);
-        for (int h=0; h < molded_shape(1); h++) {
-            for (int w=0; w < molded_shape(2); w++) {
+        for (int h=0; h < molded_shape(0); h++) {
+            for (int w=0; w < molded_shape(1); w++) {
                 _molded_images_mapped(0, h, w, 0) = molded_images(0, h, w, 2);
                 _molded_images_mapped(0, h, w, 1) = molded_images(0, h, w, 1);
                 _molded_images_mapped(0, h, w, 2) = molded_images(0, h, w, 0);
@@ -639,7 +659,7 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
         Eigen::array<int, 2> offset0 = {0, 0};
         Eigen::array<int, 2> size0 = {100, 6};
         Eigen::Tensor<float, 2, Eigen::RowMajor> sub_view = std::move( detection.slice(offset0, size0) );
-        LOG(INFO) << "subview:" << std::endl << sub_view;
+        LOG(INFO) << "subview of detection:" << std::endl << sub_view;
 #endif
         {
             int i;
@@ -659,6 +679,9 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
         Eigen::array<int, 2> size1 = {int(N), 4};
         Eigen::Tensor<float, 2, Eigen::RowMajor> sub_detection = std::move( detection.slice(offset1, size1) );
         eigen_tensor_2_matrix<float, 2>(sub_detection, ret.rois, int(N), 4);
+#ifndef NDEBUG
+        LOG(INFO) << "ret.rois" << std::endl << eigen_utils::Eigen::pretty_print(ret.rois);
+#endif
 
         std::vector<Eigen::MatrixX<float>> numeric_matrice;
         for (int i=0; i < N; i++) {
@@ -671,41 +694,130 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
 
             Eigen::Tensor<float, 3, Eigen::RowMajor> mask_slices = std::move( mask.chip(i, 0) );
             Eigen::Tensor<float, 2, Eigen::RowMajor> _mask = std::move( mask_slices.chip(class_id, 2) );
-            eigen_tensor_2_matrix<float, 2>(_mask, numeric_mat, mask.dimension(1), mask.dimension(2));
+            eigen_tensor_2_matrix<float, 2>(_mask, numeric_mat, mask.dimension(0), mask.dimension(1));
 
             numeric_matrice.push_back( std::move(numeric_mat) );
+        }
+        // @todo : TODO
+        // "converted to boolean values"
+        for (int i=0; i < N; i++)
+        {
+            float* mask_buf = numeric_matrice[i].data();
+            cv::Mat raw_mask_img(cv::Size(mask.dimension(1), mask.dimension(0)), CV_32FC1, mask_buf);
+            cv::Mat mask_img(raw_mask_img.size(), CV_8UC1);
+            cv::threshold(raw_mask_img, mask_img, 0.5, 255, cv::THRESH_BINARY);
+            Eigen::MatrixX<int> mask_numeric;
+            cv::cv2eigen(mask_img, mask_numeric);
+
+#ifndef NDEBUG
+            // Eigen::MatrixXi tmp1 = mask_numeric.block(0,0,1,5);
+            LOG(INFO) << format("subview of numeric_matrice[0]: %s", eigen_utils::Eigen::pretty_print( numeric_matrice[0].block(0, 0, 1, 5) ).c_str() );
+            LOG(INFO) << format("subview of mask_numeric: %s", eigen_utils::Eigen::pretty_print( mask_numeric.block(0,0,1,5) ).c_str() );
+#endif
+
+            ret.mask.push_back(mask_numeric);
         }
 
         // @todo : TODO (hard)
         // "Translate normalized coordinates in the resized image to pixel
         // coordinates in the original image before resizing"
-        auto norm_boxes = [=] (const Eigen::MatrixXi& box, const Eigen::Vector3i& shape) -> Eigen::MatrixXi {
+        auto norm_boxes = [=] (const Eigen::MatrixXi& box, const Eigen::Vector3i& shape) -> Eigen::MatrixXf {
             int H = shape(0), W = shape(1);
-            Eigen::Vector4i factor{H-1, W-1, H-1, W-1};
+            Eigen::Vector4f factor{H-1, W-1, H-1, W-1};
             Eigen::Vector4i offset{0, 0, 1, 1};
-            Eigen::MatrixXi ret = ( box.rowwise() - offset.transpose() ).array().rowwise() / factor.transpose().array();
+            // normalized coordiantes
+            Eigen::MatrixXf ret = ( box.cast<float>().rowwise() - offset.cast<float>().transpose() ).array().rowwise() / factor.transpose().array();
+            // LOG(INFO) << eigen_utils::Eigen::pretty_print(ret);
             return ret;
         };
-        Eigen::MatrixXi new_window = norm_boxes(window, molded_shape);
+        auto denorm_boxes = [=] (const Eigen::MatrixXf& box, const Eigen::Vector3i& shape) -> Eigen::MatrixXf {
+            int H = shape(0), W = shape(1);
+            Eigen::Vector4f factor{H-1, W-1, H-1, W-1};
+            Eigen::Vector4f offset{0, 0, 1, 1};
+            Eigen::MatrixXf ret = ( box.array().rowwise() * factor.transpose().array() ) ;
+            ret = ret.rowwise() + offset.transpose();
+            return ret;
+        };
+#ifndef NDEBUG
+        LOG(INFO) << "window: " << eigen_utils::Eigen::pretty_print(window);
+#endif
+        Eigen::MatrixXf new_window = norm_boxes(window, molded_shape);
+#ifndef NDEBUG
+        LOG(INFO) << "new_window: " << eigen_utils::Eigen::pretty_print(new_window);
+        LOG(INFO) << "python new window: " << R"(
+Out[2]: array([0.12512219, 0.        , 0.8748778 , 1.        ], dtype=float32)
+)";
+#endif
         // "Convert boxes to normalized coordinates on the window"
-        int win_h = new_window(2) - new_window(0);
-        int win_w = new_window(3) - new_window(1);
+        float win_h = new_window(2) - new_window(0);
+        float win_w = new_window(3) - new_window(1);
         Eigen::Vector4f factor{win_h, win_w, win_h, win_w};
-        Eigen::Vector4f offset{new_window(0, 0), new_window(0, 1), new_window(0, 2), new_window(0, 3)};
+        Eigen::Vector4f offset{new_window(0, 0), new_window(0, 1), new_window(0, 0), new_window(0, 1)};
+#ifndef NDEBUG
+        LOG(INFO) << "ret.rois(0,1): " << ret.rois(0,1);
+        LOG(INFO) << "offset(1): " << offset(1);
+        LOG(INFO) << "factor(1): " << factor(1);
+        LOG(INFO) << "tmp : " << ( ret.rois(0,1) - offset(1) ) / factor(1);
+#endif
         ret.rois = ( ret.rois.rowwise() - offset.transpose() ).array().rowwise() / factor.transpose().array();
 
-        // "Convert boxes to pixel coordinates on the original image(with image_shape)"
+#ifndef NDEBUG
+        LOG(INFO) << "rois bbox in normalized coordinates on the window : " << std::endl << eigen_utils::Eigen::pretty_print(ret.rois);
+#endif
 
+        // "Convert boxes to pixel coordinates on the original image(with image_shape)"
+        ret.rois = denorm_boxes(ret.rois, image_shape);
+
+#ifndef NDEBUG
+        Eigen::MatrixXi tmp0 = std::move( ret.rois.cast<int>() );
+        LOG(INFO) << "denormed mask: " << std::endl << eigen_utils::Eigen::pretty_print( tmp0 );
+        LOG(INFO) << "python mask snapshot(DEBUG):" << R"(
+Out[1]:
+array([[  0, 227, 123, 358],
+       [  3,   3, 155, 160],
+       [292, 292, 348, 338],
+       [318, 541, 364, 598],
+       [327, 332, 469, 591],
+       [177,  15, 256, 150],
+       [255,  21, 343, 132],
+       [157,  22, 209, 108],
+       [ 69, 295, 304, 602]], dtype=int32)
+
+
+)";
+#endif
 
         // @todo : TODO
         // "Filter out detections with zero area. Happens in early training when
         // network weights are still random"
-
+        std::vector<int> exclude_ids;
+        for (int i=0; i < N; i++)
+        {
+            Eigen::MatrixXi box = ret.rois.row(i).cast<int>();
+            double area = (box(0,2) - box(0,0)) * (box(0,3) - box(0,1));
+            if (area < 0) {
+                exclude_ids.push_back(i);
+            }
+        }
+        DetectronResult filtered_ret = ret.filter(exclude_ids);
 
         // @todo : TODO
-        // "Resize masks to original image size and set boundary threshold."
+        // "Resize masks to original image size"
+        for (int i=0; i < filtered_ret.rois.rows(); i++)
+        {
+            Eigen::MatrixXi mask_numeric = filtered_ret.mask[i];
+            Eigen::MatrixXi bbox = filtered_ret.rois.row(i).cast<int>();
+            cv::Mat mask_img(cv::Size(mask_numeric.cols(), mask_numeric.rows()), CV_8UC1, mask_numeric.data());
+            double H, W;
+            H = bbox(0,2) - bbox(0, 0);
+            W = bbox(0, 3) - bbox(0, 1);
+            cv::resize(mask_img, mask_img, cv::Size(W, H), 0, 0, cv::INTER_CUBIC);
+            cv::Mat full_mask(cv::Size(image_shape[1], image_shape[0]), CV_8UC1, cv::Scalar(0));
+            mask_img.copyTo(full_mask(cv::Rect(bbox(0,1), bbox(0,0), W, H)));
+            cv2eigen(full_mask, filtered_ret.mask[i]);
+        }
 
-
+        ret = filtered_ret;
     }
 
     Eigen::MatrixXd get_backbone_shapes(int H, int W) {

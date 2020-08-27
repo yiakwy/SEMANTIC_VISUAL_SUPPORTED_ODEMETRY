@@ -18,23 +18,34 @@ namespace svso {
 
 class Eigen {
 public:
-    static std::string pretty_print(::Eigen::VectorXd& vec)
-    {
-        ::Eigen::MatrixXd mat(vec.rows(), 1);
-        mat.col(0) = vec;
+    template<typename Type>
+    static std::string pretty_print(const ::Eigen::MatrixX<Type>& mat) {
         std::stringstream stream;
         ::Eigen::IOFormat HeavyFmt(::Eigen::FullPrecision, 0, " ", ";\n  ", "[ ", " ]", "[ ", " ]\n");
         stream << mat.format(HeavyFmt);
         return stream.str();
+
     }
 
-    static std::string pretty_print(::Eigen::MatrixXd& mat)
-    {
-        std::stringstream stream;
-        ::Eigen::IOFormat HeavyFmt(::Eigen::FullPrecision, 0, " ", ";\n  ", "[ ", " ]", "[ ", " ]\n");
-        stream << mat.format(HeavyFmt);
-        return stream.str();
+    template<typename Type>
+    static std::string pretty_print(const ::Eigen::MatrixX<Type>&& mat) {
+        return pretty_print(mat);
     }
+
+    template<typename Type>
+    static std::string pretty_print(const ::Eigen::Block<::Eigen::MatrixX<Type>>&& mat) {
+        typename ::Eigen::MatrixX<Type> tmp_mat = mat;
+        return pretty_print(tmp_mat);
+    }
+
+    template<typename Type>
+    static std::string pretty_print(const ::Eigen::VectorX<Type>& vec)
+    {
+        typename ::Eigen::MatrixX<Type> mat(vec.rows(), 1);
+        mat.col(0) = vec;
+        return pretty_print(mat);
+    }
+
 };
 
         }
