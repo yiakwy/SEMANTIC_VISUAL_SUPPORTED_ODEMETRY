@@ -37,8 +37,8 @@ message CameraPoint3D {
   Point3D local = 2;
 
   // == Covisibility Graph Topology
-  Pixel2D px = 4;
-  Point3D world = 5;
+  Pixel2D px = 3;
+  Point3D world = 4;
 }
 
 message WorldPoint3D {
@@ -46,11 +46,11 @@ message WorldPoint3D {
   Identity identity = 1;
 
   // == Attribute == 
-  Point3D world = 5; 
+  Point3D world = 2;
 
   // == Covisibility Graph Topology ==
   // Map: Frame::Id -> pixel location
-  map<uint64, uint32> frames = 4;
+  map<uint64, uint32> frames = 3;
 
 }
 

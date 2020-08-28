@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_multiple_files=true;
+option java_package = "io.svso";
+option java_outer_classname = "SVSO";
+option objc_class_prefix = "SVSO";
+
+package svso;
+
+message RawImage {
+    bytes data = 1;
+}

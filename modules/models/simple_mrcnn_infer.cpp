@@ -47,9 +47,14 @@ using std::vector;
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 
+#include "base/parallel_tasking_sched/task.hpp"
+#include "base/io/img.h"
+
 using namespace svso::system;
 using namespace svso::models;
 using namespace svso::base::logging;
+using namespace svso::base::pts;
+using namespace svso::base::io;
 
 // Parsing comandline inputs
 DEFINE_string(image_name, format(
@@ -72,10 +77,27 @@ int main(int argc, const char** argv) {
     Parse_args(argc, (char**)argv);
     Init_GLog(argc, argv);
 
+    // read img, note cv::imread is too slow when you are digesting a bunch of images (> 1TB)
+    /* cv::Mat img = cv::imread(FLAGS_image_name, cv::IMREAD_COLOR); */
+    Task<std::function<cv::Mat()>>::Ptr read_img(
+            new Task<std::function<cv::Mat()>>( [=] {
+                reader::RawImageConstPtr raw_image_data = reader::open_with_mmap(FLAGS_image_name);
+                reader::Img img;
+                img.set_data(raw_image_data->data());
+                cv::Mat ret = img.mat<int>();
+                return ret;
+            } )
+            );
+
+    auto read_img_fut = read_img->get_future();
+    // execute the task and do something else immediately
+    (*read_img)();
+
     TF_MRCNN_SemanticFeatureExtractor::Ptr sfe(new TF_MRCNN_SemanticFeatureExtractor);
 
-    // read img
-    cv::Mat img = cv::imread(FLAGS_image_name, cv::IMREAD_COLOR);
+    // wait for the image is ready
+    read_img_fut.wait();
+    cv::Mat img = std::move( read_img_fut.get() );
 
     if (img.empty()) {
         LOG(FATAL) << format("could not read the image %s", FLAGS_image_name.c_str());
@@ -83,7 +105,7 @@ int main(int argc, const char** argv) {
 
     tfe::InputTensors inputs;
     tfe::OutputTensors outputs;
-    std::vector<TF_MRCNN_SemanticFeatureExtractor::DetectronResult> results;~
+    std::vector<TF_MRCNN_SemanticFeatureExtractor::DetectronResult> results;
 
     // infer !
     tfe::FutureType fut = sfe->detect(img, &inputs, &outputs, results);

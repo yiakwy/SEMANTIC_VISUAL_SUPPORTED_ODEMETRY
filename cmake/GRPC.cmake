@@ -32,8 +32,18 @@ set(PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
 # Proto file
 file(GLOB_RECURSE PROTO_FILES "${PROTO_DIR}/*.proto")
 
-get_filename_component(hw_proto ${PROTO_FILES}  ABSOLUTE)
-get_filename_component(hw_proto_path "${hw_proto}" PATH)
+foreach(HW_PROTO_FIL ${PROTO_FILES})
+  get_filename_component(hw_proto_abs_tmp ${HW_PROTO_FIL}  ABSOLUTE)
+  get_filename_component(hw_proto_path_tmp "${hw_proto}" PATH)
+  list(FIND hw_proto ${hw_proto_abs_tmp} _contains_already)
+  if (${_contains_already} EQUAL -1)
+    list(APPEND hw_proto ${hw_proto_abs_tmp})
+    list(APPEND hw_proto_path ${hw_proto_path_tmp})
+  endif()
+endforeach()
+
+echo ("hw_proto : ${hw_proto}")
+echo ("hw_proto_path : ${hw_proto_path}")
 
 # utilities to generate proto c++ files, also see commandline tools, which
 # will generate proto implementation for c++, python and golang simulatneously
@@ -79,7 +89,12 @@ function(PROTOBUF_GENERATE_CPP SRCS HDRS DEST)
   echo ("PROTO_FILES: ${PROTO_FILES}")
   foreach(FIL ${PROTO_FILES})
     get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-    get_filename_component(FIL_WE ${FIL} NAME_WE)
+    file(RELATIVE_PATH REL_FIL ${PROTO_DIR} ${FIL}) # keep relative path to proto_codec
+    get_filename_component(REL_PATH "${REL_FIL}" PATH)
+    get_filename_component(FIL_WE ${REL_FIL} NAME_WE)
+    if (NOT REL_PATH STREQUAL "")
+      set (FIL_WE ${REL_PATH}/${FIL_WE})
+    endif()
     if (NOT PROTOBUF_GENERATE_CPP_APPEND_PATH)
       get_filename_component(FIL_DIR ${FIL} DIRECTORY)
       if (FIL_DIR)
