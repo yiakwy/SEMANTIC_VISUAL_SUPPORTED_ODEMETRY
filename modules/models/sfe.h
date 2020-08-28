@@ -146,14 +146,14 @@ static std::string MatDtype(const cv::Mat& img)
 
 
 // @todo TODO(avoid expensive copies) see the implementation of SemanticFeatureExtractor::detect
-template <typename Type, size_t NUM_DIMS>
-static void eigen_2_tensor(const Eigen::Tensor<Type, NUM_DIMS>& eigen_val, tf::Tensor& t) {
+template <typename Type, size_t NUM_DIMS, int LAYOUT>
+static void eigen_2_tensor(const Eigen::Tensor<Type, NUM_DIMS, LAYOUT>& eigen_val, tf::Tensor& t) {
 
 }
 
 // @todo TODO(avoid expensive copies)
-template <typename Type, int NUM_DIMS>
-static void eigen_2_tensor(const tf::Tensor& t, Eigen::Tensor<Type, NUM_DIMS>& eigen_val)
+template <typename Type, int NUM_DIMS, int LAYOUT>
+static void eigen_2_tensor(const tf::Tensor& t, Eigen::Tensor<Type, NUM_DIMS, LAYOUT>& eigen_val)
 {
 
 }
