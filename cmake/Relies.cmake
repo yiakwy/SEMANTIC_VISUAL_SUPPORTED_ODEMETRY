@@ -96,17 +96,23 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 # find_package(Ceres QUIET REQUIRED)
 # include_directories(${CERES_INCLUDE_DIRS})
 
-#[[
-# PCL-1.9
-set(PCL_DIR ${EXTERNAL_LIBS_DIR}/pcl/share/pcl-1.9)
+# Since we switch to gcc > 8.2, c++14, we decided to move to PCL-1.11 to replace old version of PCL-1.8
+# Though we have great efforts in optimizing codes base pertaining to PCL, PCL-1.11 still have a better native support to
+# CUDA and threaded algorithms in fundamental components.
+# PCL-1.11
+set(PCL_DIR ${EXTERNAL_LIBS_DIR}/pcl/share/pcl-1.11)
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    find_package(PCL QUIET REQUIRED
+    find_package(PCL REQUIRED
             COMPONENTS common kdtree octree search surface io ml sample_consensus filters geometry 2d features segmentation visualization registration)
 else ()
     find_package(PCL QUIET REQUIRED
             COMPONENTS common kdtree octree search surface io ml sample_consensus filters geometry 2d features segmentation registration)
 endif ()
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+list(APPEND CMAKE_INSTALL_RPATH "${PCL_LIBRARY_DIRS}")
 
+#[[
 # GTSAM
 set(GTSAM_DIR ${EXTERNAL_LIBS_DIR}/gtsam)
 find_package(GTSAM REQUIRED) # Uses installed package

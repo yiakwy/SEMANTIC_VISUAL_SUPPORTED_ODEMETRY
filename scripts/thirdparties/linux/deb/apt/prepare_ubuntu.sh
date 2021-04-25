@@ -39,7 +39,8 @@ sudo apt-get update && apt-get install -y \
 	tmux \
 	zip \
 	unzip \
-	wget
+	wget \
+	libaio-dev # see Linux libaio and io_uring
 
 # !important
 sudo ln -s /usr/lib/python2.7/dist-packages/vtk/libvtkRenderingPythonTkWidgets.x86_64-linux-gnu.so /usr/lib/x86_64-linux-gnu/libvtkRenderingPythonTkWidgets.so

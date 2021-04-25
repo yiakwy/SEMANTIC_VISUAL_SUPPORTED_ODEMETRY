@@ -12,12 +12,12 @@ get_proto_files() {
 
 function generate_cpp_proto()
 {
-	protoc -I${ROOT}/proto --cpp_out=${DEST} $(get_proto_files)
+	protoc -I${ROOT}/proto --cpp_out=${DEST} --proto_path=${DEST} $(get_proto_files)
 }
 
 function generate_python_proto()
 {
-	protoc -I${ROOT}/proto --python_out=${DEST} $(get_proto_files)
+	protoc -I${ROOT}/proto --python_out=${DEST} --proto_path=${DEST} $(get_proto_files)
 }
 
 help() {

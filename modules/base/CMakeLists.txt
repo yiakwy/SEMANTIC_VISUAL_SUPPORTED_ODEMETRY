@@ -7,10 +7,13 @@ echo ("hw_proto_srcs: ${hw_proto_srcs}")
 echo ("hw_proto_hdrs: ${hw_proto_hdrs}")
 echo ("PROTOBUF_INCLUDE_DIRS: ${PROTOBUF_INCLUDE_DIRS}")
 echo ("PROTOBUF_LIBRARIES: ${PROTOBUF_LIBRARIES}")
+
+list(REMOVE_ITEM FILES "io/experimental/libaio_test.cpp")
+
 add_library(${PROJECT_NAME} SHARED
         ${FILES}
         ${hw_proto_srcs}
-        ${hw_proto_hdrs} io/btree_accessor.cpp io/btree_accessor.h io/img.cpp io/img.h)
+        ${hw_proto_hdrs} io/btree_accessor.cpp io/btree_accessor.h io/img.cpp io/img.h io/blob_reader.cpp io/blob_reader.h io/velodyne_points.cpp io/velodyne_points.h timmer.cpp timmer.h misc.cpp misc.h math/vec3.cpp math/vec3.h hasher.cpp hasher.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${LIB_LINKER_FLAGS})
 target_include_directories(${PROJECT_NAME}
         PUBLIC
@@ -18,11 +21,8 @@ target_include_directories(${PROJECT_NAME}
         ${PROTOBUF_INCLUDE_DIRS}
         )
 target_link_libraries(${PROJECT_NAME}
-        boost_system
-        boost_filesystem
-        opencv_core
-        opencv_imgproc
-        opencv_imgcodecs
+        boost_system boost_filesystem
+        opencv_core opencv_imgproc opencv_imgcodecs
         ${PROTOBUF_LIBRARIES}
         ${GLOG_LIBRARIES}
         )
@@ -47,3 +47,15 @@ add_custom_target(install_${PROJECT_NAME}
   COMMENT "installing ${PROJECT_NAME} ..."
   )
 
+# @todo(add Linux utitlies wrappers and performance tests)
+add_executable(libaio_test
+        io/experimental/libaio_test.cpp
+        )
+
+# add links
+set_target_properties(libaio_test PROPERTIES LINKER_LANGUAGE CXX PRIVATE "${LIB_LINKER_FLAGS} -lrt")
+target_link_libraries(libaio_test
+        PUBLIC
+        ${PROJECT_NAME}
+        rt
+        )

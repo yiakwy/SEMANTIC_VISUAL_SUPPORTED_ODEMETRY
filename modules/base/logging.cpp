@@ -16,9 +16,9 @@ void Init_GLog(int argc, const char** argv) {
 
   // Set log directory
   google::SetLogDestination(
-      google::INFO, Mapping_format("%s/info.log", env_config::LOG_DIR).c_str());
+          google::INFO, C_MAPPING_FORMAT("%s/info.log", env_config::LOG_DIR.c_str()).c_str());
   google::SetLogDestination(
-      google::ERROR,Mapping_format("%s/error.log", env_config::LOG_DIR).c_str());
+          google::ERROR, C_MAPPING_FORMAT("%s/error.log", env_config::LOG_DIR.c_str()).c_str());
 
   // init glog
   google::InitGoogleLogging(argv[0]);
@@ -40,11 +40,6 @@ string format(const char* fmt, ...) {
   return ret;
 }
 
-string format(string fmt, ...) {
-  // throw "Not Implemented Yet!";
-  string ret;
-  return ret;
-}
 
         }
     }

@@ -88,11 +88,6 @@ class Task : public TaskBase<typename std::result_of<F(Args...)>::type> {
     func();
   }
 
-  /*
-  FutureType get_future() override {
-      return packaged_task_->get_future();
-  }
-   */
   auto get_future() -> std::future<typename std::result_of<F(Args...)>::type> {
     return packaged_task_->get_future();
   }
@@ -101,6 +96,7 @@ class Task : public TaskBase<typename std::result_of<F(Args...)>::type> {
   std::shared_ptr<std::packaged_task<ReturnType()>> packaged_task_;
 };
 
+// extension of intel tbb task group implementation, see issue : https://github.com/oneapi-src/oneTBB/issues/180
 class TaskPool {
  public:
   virtual ~TaskPool() {}
@@ -139,9 +135,12 @@ class TBBTaskPoolImpl : public TaskPool {
 
     // push the task into queue
     void* tag = tag(task);
-    tasks_.push_back(tag);
+    tasks_.push(tag);
     typename Task<F, Args...>::FutureType fut = task->get_future();
-    task_group_->run([&] { (*task)(); });
+    task_group_->run([&] {
+        (*task)();
+
+    });
     return fut;
   }
 
@@ -149,7 +148,7 @@ class TBBTaskPoolImpl : public TaskPool {
 
  protected:
   tbb_task_group_t task_group_;
-  std::vector<void*> tasks_;
+  tbb::concurrent_queue<void*> tasks_;
 };
 
     }

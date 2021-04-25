@@ -113,11 +113,14 @@ endif()
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set (CODEC_GEN                      "${CMAKE_BINARY_DIR}/codec_gen")
+set (CODEC_GEN                      "${CMAKE_BINARY_DIR}/proto_codec")
 set (SRCS_ROOT                      "${PROJECT_SOURCE_DIR}/modules")
 set (ROOT                           "${PROJECT_SOURCE_DIR}")
 
 list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
+
+## Options
+option(GLOBAL_DEBUG_SWITCH "Switch codes to debug mode" TRUE)
 
 ## Import dependancies
 include (cmake/Relies.cmake)
@@ -128,8 +131,12 @@ configure_file(config/env_config.h.in
   ${PROJECT_SOURCE_DIR}/config/env_config.h)
 include_directories(config)
 include_directories(modules)
+
 # just for header files and libraries references
 include_directories(vendors)
+
+# add searching path for generated proto files
+include_directories(${CODEC_GEN})
 
 add_subdirectory(${SRCS_ROOT})
 # add pysvso (python implementation of svso) and python bindings to svso core c++ libraries

@@ -16,7 +16,8 @@ The purpose of the project is that by applying semantic segmentation and recogin
 2. BoW for images is a method of clustering, but should not be the ideal one; we can use naturally segmented instances to group and recall key points, frames and mapblocks. In this project, we use Landmark to recall associated keypoints and frames for PnP process which is very easy to do. Our tests show that the computed poses are very close to ground truth.
 
 3. In sparse SLAM, matching is accurate only when two frames are close enough. This holds even though we apply different strategies of test ratios with risks of greatly reducing mathing of points  
-But meanwhile, triangulation from initialization or local mapping statges would be greately improved when stereo disparity becomes large and more frames \(> 2 frames\)  are involved (Global Bundle Adjustment). This means that two frames used in matching can't be close.  
+  
+   But meanwhile, triangulation from initialization or local mapping statges would be greately improved when stereo disparity becomes large and more frames \(> 2 frames\)  are involved (Global Bundle Adjustment). This means that two frames used in matching can't be close.  
 Hence I made great efforts in designing tracking state machine and methods for matching to resolve above mentioned delimma to get very good mathching results while preserve triangulation precisions.
 
 <img src="https://drive.google.com/uc?export=view&id=1Wca-gyz4EzCQsOlwfMhVewVDFs-erDrb" 
@@ -45,35 +46,35 @@ see "docs/install_and_debug_from_docker.md"
 
 ## Install From Source
 
-### Dependencies
+#### Dependencies
 
 The most of libraries and dependencies could be installed automatically by provided scripts in "$ROOT/scripts". But there are still some third party packages
 needed be installed from source manually. Instructions or automation scripts provided. Third party projects built from source will be distributed into "${ROOT}/vendors/${REPO}/". For example, we build 
 tensorflow inside "${ROOT}/vendors/github.com/tensorflow_cc/tensorflow_cc/tensorflow".
 
-### Env
+#### Env
 
 The default system is built upon `Ubuntu 18.04` but other verions are also possible to be sopported. The hardware includes a physical GeForce RTX GPU (compute ability 7.5) and monocular camera with a workable scale advisor device. 
 
 According to the NV website and our tests, `cuda 10.2`, `cudnn` 7.6.5 is just enough. At the beginning, I choose MASK-RCNN pre-trained with coco dataset for POC. You can change the model to lighter one to compute semantic features for instances. In our tests, the features are not distinguwshable from objects with the same label, hence we use
 **UIoU** I invented last year in ROI matching procesure \(see `ROIMatcher`\) to keep track of identified objects.  
 
-### Step1: Build general dependencies of the project 
+#### Step1: Build general dependencies of the project 
 
 > bash scripts/install.sh
 
-### Step2: Install anaconda conda and create virtual environments with python3.6 by conda
+#### Step2: Install anaconda conda and create virtual environments with python3.6 by conda
 
 The above step will install c++ development libraries together with ros packages.
 
-### Step3: Install python dependencies
+#### Step3: Install python dependencies
 
 This step creates environment to run python codes inside the project, which including experimental `all in one`\(out of date\) Semantic Visual Supported Odemetry \(SVOSO\) tracker
 in "${ROOT}/notebooks/svso_tracker.ipynb" and python implementation of svso in "${ROOT}/python"
 
 > bash scripts/init_python.sh
 
-### Step4: Build Opencv4 libraries and python bindings
+#### Step4: Build Opencv4 libraries and python bindings
 
 > bash scripts/thirdparty/linux/deb/apt/install\_opencv.sh
 
@@ -102,7 +103,7 @@ cd /home/$USER/anaconda3/envs/py36/lib/python3.6/site-packages/cv2/python-3.6
 mv cv2.cpython-36m-x86_64-linux-${OS\_SUFFIX}.so cv2.so
 ```
 
-### Step5: C++ specific devleopment libraries
+#### Step5: C++ specific devleopment libraries
 
 We moved our major backend into c++ version to make full use of concurrency and parallel computing abilities. The backend includes
 
@@ -157,7 +158,7 @@ If any mismatch happens, checkout the tensorflow bazel file to see if any depend
 
 If script does not work \(due to your network proxy, git ssh configuration, git cache setting and many other reasons\), here are the procedures to do:
 
-1) open "vendors/github.com/tensorflow_cc/tensorflow_cc/cmake/TensorflowBase.cmake" and modify:
+1\) open "vendors/github.com/tensorflow_cc/tensorflow_cc/cmake/TensorflowBase.cmake" and modify:
 
 ```
 ExternalProject_Add(
@@ -181,9 +182,10 @@ ExternalProject_Add(
   INSTALL_COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/cmake/copy_links.sh" bazel-bin
 )
 ```
+
 where $TENSORFLOW_TAG defined in "tensorflow_cc/cmake/CMakefile.cmake"
 
-2) since bazel consumes a large portion of memories \[1\]\[2\] which could break your building process, replace bazel build command with the following one:
+2\) since bazel consumes a large portion of memories \[1\]\[2\] which could break your building process, replace bazel build command with the following one:
 
 ```
 # tensorflow_cc/cmake/build_tensorflow.sh.in
