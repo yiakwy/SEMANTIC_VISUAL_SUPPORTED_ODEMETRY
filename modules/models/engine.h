@@ -54,9 +54,9 @@ using std::vector;
 #include <condition_variable>
 #include <functional>
 #include <future>
-#include "base/parallel_tasking_sched/threading_pool.hpp"
-#include "base/parallel_tasking_sched/task.hpp"
-#include "base/parallel_tasking_sched/channel.hpp"
+#include "base/parallel_tasking_sched/threading_pool.h"
+#include "base/parallel_tasking_sched/task.h"
+#include "base/parallel_tasking_sched/channel.h"
 
 using namespace svso::base::pts;
 

@@ -189,8 +189,6 @@ private:
 
 };
 
-AtomicCounter Identity::Sequence{};
-
 } // base
 } // svso
 

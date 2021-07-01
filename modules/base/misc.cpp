@@ -3,3 +3,11 @@
 //
 
 #include "misc.h"
+
+namespace svso {
+namespace base {
+
+AtomicCounter Identity::Sequence{};
+
+} // base
+} // svso

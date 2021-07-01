@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_HASHER_H
-#define SEMANTIC_RELOCALIZATION_HASHER_H
+#ifndef SEMANTIC_RELOCALIZATION_ARRAT_LIKE_HASHER_H
+#define SEMANTIC_RELOCALIZATION_ARRAT_LIKE_HASHER_H
 
 #include <unordered_map>
 using std::pair;
@@ -16,8 +16,12 @@ using std::pair;
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
 
+#include "base/exceptions.h"
+
 namespace svso {
 namespace base {
+
+using namespace svso::base::exceptions;
 
 static const long long SEED=0x9e3779b9;
 
@@ -42,14 +46,14 @@ struct _hasher : std::unary_function<T, size_t> {
         } else
         //*/
         if (std::is_same<T, std::pair<IndexScalar, IndexScalar>>::value) {
-            ret ^= std::hash<IndexScalar>()( shape.first ) + SEED + (ret << 6) + (ret >> 2);
+            ret ^= std::hash<IndexScalar>()( shape.first  ) + SEED + (ret << 6) + (ret >> 2);
             ret ^= std::hash<IndexScalar>()( shape.second ) + SEED + (ret << 6) + (ret >> 2);
         }
         // treat T as general array
         else {
             for (size_t i=0; i < shape.size(); i++)
             {
-                ret ^= std::hash<typename T::Scalar>()( shape(i) ) + 0x9e3779b9 + (ret << 6) + (ret >> 2);
+                ret ^= std::hash<typename T::Scalar>()( shape(i) ) + SEED + (ret << 6) + (ret >> 2);
             }
         }
 
@@ -67,6 +71,8 @@ struct _pair_hasher {
         if (true) {// (std::is_same<T, std::pair<int,int>>::value) {
             // Cantor pairing function:
             ret = (shape.first + shape.second) * (shape.first + shape.second + 1) / 2 + shape.first;
+        } else {
+            NOT_IMPLEMENTED
         }
 
         return ret;
@@ -82,7 +88,7 @@ struct _pair_hasher {
             }
         }
         else {
-            return false;
+            NOT_IMPLEMENTED
         }
     }
 };
@@ -90,4 +96,4 @@ struct _pair_hasher {
 } // base
 } // svso
 
-#endif //SEMANTIC_RELOCALIZATION_HASHER_H
+#endif //SEMANTIC_RELOCALIZATION_ARRAT_LIKE_HASHER_H

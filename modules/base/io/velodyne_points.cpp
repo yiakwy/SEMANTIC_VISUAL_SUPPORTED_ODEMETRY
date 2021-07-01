@@ -8,20 +8,22 @@ namespace svso {
 namespace base {
 namespace io {
 namespace reader {
-
+/*
 using namespace fast_ground_segment;
-
+ */
 pcl::PointCloud<VelodynePoints::PCLPoint>::Ptr
 VelodynePoints::EstimatePlane() {
     Eigen::Vector4f ground_coeff;
 
-    LinefitGroundSegmentInitOptions init_options;
-    LinefitGroundSegment line_fit_ground_segmentor(init_options);
     std::vector<int> ground_indice_mask;
     std::vector<int> indices;
+    /*
+    LinefitGroundSegmentInitOptions init_options;
+    LinefitGroundSegment line_fit_ground_segmentor(init_options);
+
 
     line_fit_ground_segmentor.segment(*structured_points_, &ground_indice_mask);
-
+    */
     pcl::PointCloud<PCLPoint>::Ptr ground_sample(new pcl::PointCloud<PCLPoint>);
     for (size_t i=0; i < structured_points_->size(); ++i) {
         if (ground_indice_mask[i] == 1) {

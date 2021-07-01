@@ -1,6 +1,7 @@
 //
 // Created by yiak on 2021/4/17.
 //
+#pragma once
 
 #ifndef SEMANTIC_RELOCALIZATION_BLOB_READER_H
 #define SEMANTIC_RELOCALIZATION_BLOB_READER_H
@@ -136,7 +137,7 @@ public:
         }
         return (RawProtoConstPtr)raw_proto;
 
-        __error__:
+    __error__:
         // clean up
         exit(FAILURE);
     }

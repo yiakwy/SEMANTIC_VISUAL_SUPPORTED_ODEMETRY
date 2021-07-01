@@ -23,38 +23,45 @@ Ubuntu_() {
 }
 
 build_img() {
-tag_suffix=$2
-Ubuntu_ $tag_suffix
+  tag_suffix=$2
+  Ubuntu_ $tag_suffix
 
-# set network proxy
-# if you are experiencing a slow network, consider arg UBUNTU_MIRROR and set it to the nearest endpoint.
-HTTP_PROXY="http://127.0.0.1:8888"
-HTTPS_PROXY="https://127.0.0.1:8888"
-args=(
-"--build-arg http_proxy=$HTTP_PROXY"
-"--build-arg https_proxy=$HTTPS_PROXY"
-)
+  # set network proxy
+  # if you are experiencing a slow network, consider arg UBUNTU_MIRROR and set it to the nearest endpoint.
+  HTTP_PROXY="http://127.0.0.1:8888"
+  HTTPS_PROXY="https://127.0.0.1:8888"
+  args=(
+  "--build-arg http_proxy=$HTTP_PROXY"
+  "--build-arg https_proxy=$HTTPS_PROXY"
+  )
 
-DOCKER_FILE=$1
+  DOCKER_FILE=$1
 
-if [ USE_PROXY = "YES" ]; then
-echo "Using proxy HTTP_PROXY=$HTTP_PROXY HTTPS_PROXY=$HTTPS_PROXY"
-docker build -t "$DOCKER_REPO:$TAG" \
-	-f "$ROOT/docker/$DOCKER_FILE" \
-	"$ROOT" $args
-else
-docker build -t "$DOCKER_REPO:$TAG" \
-	-f "$ROOT/docker/$DOCKER_FILE" \
-	"$ROOT"
-fi
+  # to avoid bad influences from intermediate layers
+  # remove dangling images : docker rmi -f $(docker images -f "dangling=true" -q)
+  if [ USE_PROXY = "YES" ]; then
+    echo "Using proxy HTTP_PROXY=$HTTP_PROXY HTTPS_PROXY=$HTTPS_PROXY"
+    docker build -t "$DOCKER_REPO:$TAG" \
+      -f "$ROOT/docker/$DOCKER_FILE" \
+      "$ROOT" $args
+  else
+    docker build -t "$DOCKER_REPO:$TAG" \
+      -f "$ROOT/docker/$DOCKER_FILE" \
+      "$ROOT"
+  fi
 
+}
+
+# @todo TODO
+update_img() {
+ echo "Not Implemented Yet!"
 }
 
 main() {
 # do not modify the lines below  unless you understand what you are doing ...
-# build_img "Dockerfile" "base"
 
-build_img "Dockerfile.devel.0" "stage_1"
+build_img "Dockerfile.base" "base"
+# build_img "Dockerfile.devel.ml" "stage_ml"
 }
 
 main

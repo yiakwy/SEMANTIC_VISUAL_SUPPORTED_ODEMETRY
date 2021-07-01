@@ -47,7 +47,7 @@ using std::vector;
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 
-#include "base/parallel_tasking_sched/task.hpp"
+#include "base/parallel_tasking_sched/task.h"
 #include "base/io/img.h"
 
 using namespace svso::system;

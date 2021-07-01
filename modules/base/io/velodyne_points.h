@@ -63,7 +63,7 @@ using std::set;
 
 // math
 #include <base/math/vec3.h>
-#include <base/hasher.h>
+#include <base/arrat_like_hasher.h>
 
 // logging
 #include <base/logging.h>
@@ -73,13 +73,12 @@ using std::set;
 
 #include "devices/velodyne_points.pb.h"
 #include "devices/camera.pb.h"
-#include "../../../../tmp/lidar_single_track/modules/lidar/lidar/common/io/experimental/velodyne_points.h"
 
 // local control of debug status regardless of build type
 #ifdef TEST_ON
 #undef TEST_ON
-#define TEST_ON env_config::GLOBAL_DEBUG_SWITCH
 #endif
+#define TEST_ON env_config::GLOBAL_DEBUG_SWITCH
 
 namespace svso {
 namespace base {
@@ -197,7 +196,6 @@ public:
     using InitOptions = VelodynePointsInitOptions;
 
     // used for upgrading to LidarFrame
-    using PointMeta = PointMeta;
     using PointKey = size_t;
     using PointMetaBucket = tbb::concurrent_hash_map<PointKey, PointMeta>;
 
@@ -481,12 +479,12 @@ private:
 
 // register the point type to PCL codebase to enable the use of PCL algorithms
 POINT_CLOUD_REGISTER_POINT_STRUCT(svso::base::io::reader::Point3D,
-                            (float, x, x)
-                                  (float, y, y)
-                                  (float, z, z)
-                                  (int, rowId, rowId)
-                                  (int, colId, colId)
-                                  (float, d, d)
-                                  (float, intensity, intensity))
+                           (float, x, x)
+                                 (float, y, y)
+                                 (float, z, z)
+                                 (int, rowId, rowId)
+                                 (int, colId, colId)
+                                 (float, d, d)
+                                 (float, intensity, intensity))
 
 #endif //SEMANTIC_RELOCALIZATION_VELODYNE_POINTS_H

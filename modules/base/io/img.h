@@ -99,7 +99,7 @@ static bool is_exist(std::string &file_name) {
 using RawImagePtr = std::shared_ptr<RawImage>;
 using RawImageConstPtr = std::shared_ptr<const RawImage>;
 
-RawImageConstPtr open_with_mmap(std::string fn) {
+static RawImageConstPtr open_with_mmap(std::string fn) {
     size_t memory_size;
     RawImagePtr raw_image = nullptr;
     {

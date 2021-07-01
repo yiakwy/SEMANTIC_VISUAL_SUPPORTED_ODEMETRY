@@ -8,12 +8,13 @@ echo ("hw_proto_hdrs: ${hw_proto_hdrs}")
 echo ("PROTOBUF_INCLUDE_DIRS: ${PROTOBUF_INCLUDE_DIRS}")
 echo ("PROTOBUF_LIBRARIES: ${PROTOBUF_LIBRARIES}")
 
-list(REMOVE_ITEM FILES "io/experimental/libaio_test.cpp")
+list(REMOVE_ITEM FILES "${CMAKE_CURRENT_SOURCE_DIR}/io/experimental/libaio_test.cpp")
+# echo ("FILES for base : ${FILES}")
 
 add_library(${PROJECT_NAME} SHARED
         ${FILES}
         ${hw_proto_srcs}
-        ${hw_proto_hdrs} io/btree_accessor.cpp io/btree_accessor.h io/img.cpp io/img.h io/blob_reader.cpp io/blob_reader.h io/velodyne_points.cpp io/velodyne_points.h timmer.cpp timmer.h misc.cpp misc.h math/vec3.cpp math/vec3.h hasher.cpp hasher.h)
+        ${hw_proto_hdrs})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${LIB_LINKER_FLAGS})
 target_include_directories(${PROJECT_NAME}
         PUBLIC
@@ -23,8 +24,11 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
         boost_system boost_filesystem
         opencv_core opencv_imgproc opencv_imgcodecs
+        ${TBB_LIBRARIES}
         ${PROTOBUF_LIBRARIES}
+        # ${GFLAGS_LIBRARIES}
         ${GLOG_LIBRARIES}
+        ${PCL_LIBRARIES}
         )
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -39,7 +43,7 @@ elseif (CMAKE_HOST_APPLE)
 elseif (CMAKE_HOST_UNIX)
   INSTALL(TARGETS ${PROJECT_NAME} DESTINATION lib/linux/${PROJECT_NAME})
 endif()
-INSTALL(DIRECTORY ./ DESTINATION include/${PROJECT_NAME} FILES_MATCHING PATTERN ".hpp")
+INSTALL(DIRECTORY ./ DESTINATION include/${PROJECT_NAME} FILES_MATCHING PATTERN ".hpp .h")
 
 add_custom_target(install_${PROJECT_NAME}
   "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target install
@@ -57,5 +61,7 @@ set_target_properties(libaio_test PROPERTIES LINKER_LANGUAGE CXX PRIVATE "${LIB_
 target_link_libraries(libaio_test
         PUBLIC
         ${PROJECT_NAME}
+        # ${GFLAGS_LIBRARIES}
+        ${GLOG_LIBRARIES}
         rt
         )
