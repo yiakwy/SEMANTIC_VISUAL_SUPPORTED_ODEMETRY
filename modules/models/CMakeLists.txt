@@ -32,7 +32,7 @@ echo ("FILES : ${FILES}")
 add_library(${PROJECT_NAME} SHARED
         ${FILES}
         # ${ROOT}/vendors/matplotlib-cpp/matplotlibcpp.h
-        sfe.cpp sfe.h simple_mrcnn_infer.cpp utils/eigen_util.cpp utils/eigen_util.h ../pose_graph/frame.cpp ../pose_graph/frame.h)
+		)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${LIB_LINKER_FLAGS})
 # include third party libraries here
 
@@ -43,7 +43,7 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC
         ${PYTHON_LIBRARIES}
         base
-	TensorflowCC::TensorflowCC # freshly added 	
+	    TensorflowCC::TensorflowCC # freshly added
         )
 
 add_definitions( -DPYTHON_INCLUDE_DIR=${PYTHON_INCLUDE_DIR} )
@@ -100,8 +100,7 @@ target_include_directories(simple_mrcnn_infer PUBLIC ${TensorFlow_INCLUDE_DIRS})
 target_link_libraries(simple_mrcnn_infer
         PUBLIC
         ${PROJECT_NAME}
-        TensorflowCC::TensorflowCC
-)
+        TensorflowCC::TensorflowCC)
 
 # @todo TODO
 # link cuda if cuda devices found

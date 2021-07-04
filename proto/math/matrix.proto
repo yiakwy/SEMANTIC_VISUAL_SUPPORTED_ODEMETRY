@@ -1,0 +1,33 @@
+syntax = "proto3"; // Our library is using libprotoc-3.8.0
+
+option java_multiple_files=true;
+option java_package = "matrix_array.math.io.common.svso";
+option java_outer_classname = "Math";
+option objc_class_prefix = "Math";
+
+package svso.common.io.math.matrix_array;
+
+message Number {
+  oneof val {
+    float val_f = 1;
+    int32 val_i32 = 2;
+    double val_d = 3;
+    int64 val_i64 = 4;
+  }
+}
+
+message MatrixArray {
+  repeated Number vals = 1;
+  repeated int32 shape = 2;
+}
+
+message Vec3 {
+  Number x = 1;
+  Number y = 2;
+  Number z = 3;
+}
+
+message Vec2 {
+  Number x = 1;
+  Number y = 2;
+}

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(Semantic_Relocalization C CXX)
+project(SEMANTIC_VISUAL_SUPPORTED_ODEMETRY C CXX)
 
 set (VERSION_MAJOR 1)
 set (VERSION_MINOR 0)
@@ -33,7 +33,7 @@ if (EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
     )
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -march=native -Wno-invalid-offsetof")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -march=native")
 # Add it for debug convenience, freshly added
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
@@ -54,8 +54,8 @@ if (CMAKE_HOST_APPLE)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-compare")
 endif()
 if (CMAKE_HOST_UNIX)
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declaration")
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declaration")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
 endif()
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
@@ -95,6 +95,11 @@ if (GCC_SANTINIZER)
   endif()
 endif()
 
+## add tests check target
+add_custom_target(check
+        COMMAND ${CMAKE_CTEST_COMMAND})
+enable_testing()
+
 ## define generated files directory
 
 if (DEFINED ENV{DATA_DIR})
@@ -113,11 +118,17 @@ endif()
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set (CODEC_GEN                      "${CMAKE_BINARY_DIR}/codec_gen")
 set (SRCS_ROOT                      "${PROJECT_SOURCE_DIR}/modules")
 set (ROOT                           "${PROJECT_SOURCE_DIR}")
+set (CONF_DIR                       "${PROJECT_SOURCE_DIR}/config")
+set (PROTO_GEN                      "${CMAKE_BINARY_DIR}/proto_codec")
 
 list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
+
+## Options
+option(GLOBAL_DEBUG_SWITCH "Switch codes to debug mode" TRUE)
+option(CUDA "Enable CUDA" ON)
+option(GTEST "Build GTest test suites" ON)
 
 ## Import dependancies
 include (cmake/Relies.cmake)
@@ -128,8 +139,12 @@ configure_file(config/env_config.h.in
   ${PROJECT_SOURCE_DIR}/config/env_config.h)
 include_directories(config)
 include_directories(modules)
+
 # just for header files and libraries references
 include_directories(vendors)
+
+# add searching path for generated proto files
+include_directories(${CODEC_GEN})
 
 add_subdirectory(${SRCS_ROOT})
 # add pysvso (python implementation of svso) and python bindings to svso core c++ libraries
@@ -141,4 +156,7 @@ if (GTEST)
   echo ("Building tests ...")
   enable_testing()
   add_subdirectory(tests/gtest)
+else()
+  echo ("GTEST flag is empty. Tests will not be built.")
+  echo ("add -DGTEST=ON if you want build tests")
 endif()

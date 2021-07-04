@@ -1,12 +1,63 @@
-syntax = "proto3";
+syntax = "proto3"; // Our library is using libprotoc-3.8.0
 
 option java_multiple_files=true;
-option java_package = "io.svso";
-option java_outer_classname = "SVSO";
-option objc_class_prefix = "SVSO";
+option java_package = "sensors.io.common.svso";
+option java_outer_classname = "Sensors";
+option objc_class_prefix = "Sensors";
 
-package svso;
+import public "math/matrix.proto";
+package svso.common.io.sensors;
+
+message ImgShape {
+    int32 H = 1;
+    int32 W = 2;
+    int32 Channel = 3; // default to 1
+}
+
+message RGB {
+    float bytes = 1;
+}
+
+message HSV {
+    float bytes = 1;
+}
 
 message RawImage {
     bytes data = 1;
+    ImgShape shape = 6;
+    int32 fps = 13;
+
+    // series type
+    string series_type = 2;
+
+    uint64 timestamp = 3;
+
+    // ** see product official website
+
+
+    // ** Color system
+
+    int32 color_sys = 7;
+    RGB rgb = 8;
+    HSV hsv = 9; // controlling brightness and saturation
+
+    // ** ISP
+    int32 exposure = 10;
+    int32 auto_white_balance = 11;
+    int32 white_ballance = 12;
+}
+
+message Camera {
+    // series type
+    string series_type = 1;
+
+    // ** Calibration
+
+    // 4x4 matrix
+    math.matrix_array.MatrixArray Twc = 2;
+
+    // distortion
+    // 4x1 vector
+    math.matrix_array.MatrixArray distortion = 3;
+
 }

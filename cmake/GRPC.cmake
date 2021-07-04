@@ -1,5 +1,5 @@
-set (PROTO_CODEC "${CMAKE_BINARY_DIR}/proto_codec")
-set (PROTO_DIR "${PROJECT_SOURCE_DIR}/proto")
+set (PROTO_DIR   "${PROJECT_SOURCE_DIR}/proto")
+set (PROTO_CODEC "${PROTO_GEN}")
 
 file(MAKE_DIRECTORY ${PROTO_CODEC})
 
@@ -12,6 +12,7 @@ set (Protobuf_PROTOC_EXECUTABLE "/usr/local/bin/protoc") # defaults to protoc-3.
 # check cmake --help-module FindProtobuf for details
 find_package(Protobuf REQUIRED)
 echo ("Using protobuf ${Protobuf_VERSION}")
+echo ("Protobuf_INCLUDE_DIRS: ${Protobuf_INCLUDE_DIRS}")
 include_directories(${Protobuf_INCLUDE_DIRS})
 
 set(PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)

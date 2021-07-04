@@ -4,7 +4,7 @@ import sys
 # import threading libraries
 
 import threading
-# useful thread library
+# loading useful linux thread library
 import ctypes
 
 LIBC = ctypes.cdll.LoadLibrary('libc.so.6')
@@ -97,8 +97,8 @@ class Worker(threading.Thread):
         self.run_forever()
 
 
-# used when a thread is working on both I/O and cpu bunded computation only
-# AsyncWorker implements logics to interact with Kernel based on Linux epoll based on Asyncio
+# Used when a thread is working on both I/O and cpu bunded computation only
+# AsyncWorker implements logics to interact with Kernel using Asyncio based on Linux epoll, MacOS Kqueue and MS IOCP technologies
 # Other async machenisims will be supported soon
 class AsyncWorker:
     pass

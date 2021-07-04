@@ -47,8 +47,8 @@ using std::vector;
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 
-#include "base/parallel_tasking_sched/task.hpp"
-#include "base/io/img.h"
+#include "base/parallel_tasking_sched/task.h"
+#include "base/io/sensors/img.h"
 
 using namespace svso::system;
 using namespace svso::models;
@@ -77,11 +77,13 @@ int main(int argc, const char** argv) {
     Parse_args(argc, (char**)argv);
     Init_GLog(argc, argv);
 
+    ThreadPool pool(3);
+
     // read img, note cv::imread is too slow when you are digesting a bunch of images (> 1TB)
     /* cv::Mat img = cv::imread(FLAGS_image_name, cv::IMREAD_COLOR); */
     Task<std::function<cv::Mat()>>::Ptr read_img(
-            new Task<std::function<cv::Mat()>>( [=] {
-                reader::RawImageConstPtr raw_image_data = reader::open_with_mmap(FLAGS_image_name);
+            new Task<std::function<cv::Mat()>>( [&] {
+                reader::RawImageConstPtr raw_image_data = reader::open_with_mmap(FLAGS_image_name); // read the large block of data using mmap, it will take few milli seconds to build mapping
                 reader::Img img;
                 img.set_data(raw_image_data->data());
                 cv::Mat ret = img.mat<int>();
@@ -91,7 +93,9 @@ int main(int argc, const char** argv) {
 
     auto read_img_fut = read_img->get_future();
     // execute the task and do something else immediately
-    (*read_img)();
+    pool.enqueue([&] {
+        (*read_img)();
+    });
 
     TF_MRCNN_SemanticFeatureExtractor::Ptr sfe(new TF_MRCNN_SemanticFeatureExtractor);
 

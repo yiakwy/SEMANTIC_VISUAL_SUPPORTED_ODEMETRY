@@ -4,8 +4,8 @@
 
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_ENGINE_H
-#define SEMANTIC_RELOCALIZATION_ENGINE_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_ENGINE_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_ENGINE_H
 
 // Tensorflow building scripts has been updated
 // #include "tensorflow/core/platform/env.h"
@@ -54,9 +54,9 @@ using std::vector;
 #include <condition_variable>
 #include <functional>
 #include <future>
-#include "base/parallel_tasking_sched/threading_pool.hpp"
-#include "base/parallel_tasking_sched/task.hpp"
-#include "base/parallel_tasking_sched/channel.hpp"
+#include "base/parallel_tasking_sched/threading_pool.h"
+#include "base/parallel_tasking_sched/task.h"
+#include "base/parallel_tasking_sched/channel.h"
 
 using namespace svso::base::pts;
 
@@ -307,4 +307,4 @@ protected:
 }
 
 
-#endif //SEMANTIC_RELOCALIZATION_ENGINE_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_ENGINE_H

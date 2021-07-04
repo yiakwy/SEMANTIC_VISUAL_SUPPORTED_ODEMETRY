@@ -1,37 +1,43 @@
-FROM nvidia/cuda:10.2-base-ubuntu18.04
+# by default we are using docker 19.03.12 build 48a6623fe, that's enable us
+# to use base container to access built-in graphic card driver
+ARG BASE=nvidia/cuda:10.2-base-ubuntu18.04
+FROM ${BASE}
 
 MAINTAINER LEI WANG <yiak.wy@gmail.com>
 
-LABEL version="0.1.2"
-LABEL description=""
+LABEL version="0.1.3"
+LABEL description="base image for building SVSO(successive project : prefused_mapping) cpp backend"
 
 # https://github.com/phusion/baseimage-docker/issues/319
 ENV DEBIAN_FRONTEND teletype
 
-# project referred from context
-ADD . /tmp/deploy/SEMANTIC_VISUAL_SUPPORTED_ODEMETRY
-
-# install general dependencies
-RUN ls -h
-RUN ls -h /tmp/deploy/SEMANTIC_VISUAL_SUPPORTED_ODEMETRY
-
-WORKDIR /tmp/deploy/SEMANTIC_VISUAL_SUPPORTED_ODEMETRY
+# prefuse_mapping installation directory
+ARG DEPLOY_ROOT=/opt/deploy/prefuse_mapping
+WORKDIR /tmp
 RUN du -h --max-depth=1
+
 # remove nvidia repo from source
 RUN mv /etc/apt/sources.list.d/cuda.list /tmp/cuda.list.bak && mv /etc/apt/sources.list.d/nvidia-ml.list /tmp/nvidia-ml.list.bak
 
-# uncomment it for network test
-# RUN bash ./docker/scripts/test_network_connectivity.sh
 
+# install utilities
+# install sshd to enable ssh connection from host (e.g. Clion, Pycharm) to the docker
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 RUN apt-get update && apt-get -y --no-install-recommends install \
  sudo \
- apt-utils
+ apt-utils \
+ ssh
 
-RUN DEBIAN_FRONTEND=noninteractive bash ./scripts/thirdparties/linux/deb/apt/prepare_ubuntu.sh
-RUN DEBIAN_FRONTEND=noninteractive bash ./scripts/install.sh
+ARG UBUNTU_SCRIPTS_ROOT=scripts/thirdparties/linux/deb/apt/
+ARG DOCKER_SCRIPTS_ROOT=docker/scripts
+ADD ${UBUNTU_SCRIPTS_ROOT}/prepare_ubuntu.sh ${UBUNTU_SCRIPTS_ROOT}/prepare_ubuntu.sh
+RUN DEBIAN_FRONTEND=noninteractive bash ${UBUNTU_SCRIPTS_ROOT}/prepare_ubuntu.sh
+# https://docs.docker.com/engine/security/rootless/
+ADD ${DOCKER_SCRIPTS_ROOT}/add_user.sh  ${DOCKER_SCRIPTS_ROOT}/add_user.sh
+RUN DEBIAN_FRONTEND=noninteractive bash ${DOCKER_SCRIPTS_ROOT}/add_user.sh
+# RUN DEBIAN_FRONTEND=noninteractive bash ./scripts/install.sh
 
-# Note before Docker 19.03, one has to install nvidia-driver in the container
+# Note before Docker 19.03, one has to install nvidia-driver in the container to use cuda
 
 # step 1: Install anaconda for python 3.6
 RUN wget --quiet https://repo.continuum.io/archive/Anaconda3-5.0.1-Linux-x86_64.sh -O ~/anaconda.sh && \

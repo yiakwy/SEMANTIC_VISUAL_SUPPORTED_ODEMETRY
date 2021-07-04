@@ -6,14 +6,15 @@ But I found only few of them suitable for our application:
 
 1. Export python codes to c++: Most of existing models are developed in python and our main program is developped in c++ for real time application (slam).  
 However Python runtime is very expensive to call from c++, especially inside a forever true query loop.
-2. Passing messages through communication (network, pipe or filesystem):
+2. Passing messages through communication (network, pipe or filesystem):  
+     
      2.1 Deploy subscribers and publishers network with cross language message transportation (grpc:tcp+http2.0): Another method is to export services and host programs can fetch the results through network infra.  
-This is a big project I used to have done with grpc:  
-1) a node (python) subscribes image sources and publishes results to a broker developed using c++  
-2) and our application (slam) publishes image sources and subscribes results of the predictions from the python node  
+This is a big project I used to have done with grpc:
+     1) a node (python) subscribes image sources and publishes results to a broker developed using c++  
+     2) and our application (slam) publishes image sources and subscribes results of the predictions from the python node  
+     
      2.2. Depoly a prediction server(http/https 1.1): This is easy to implement but migth not work with a complex model, for example, MRCNN, that we have to compute anchors, preprocess images, fetch and filter results from the predictions.
 3. C++ inference engine: Export the model and variables to neutral format to describe the graph and provide customer codes(c++) to preprocess images, fetch and filter results from the predictions. The 
-
 
 Both quality of software implementation on network infra and sizes of messages to pass, greatly affect the performance of inferences. With concern of performance of inferences in real time, and complexity involving software implementation of network infra, we provides c++ inference engine for cpp implementation for the moment. 
 

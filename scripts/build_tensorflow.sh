@@ -31,6 +31,7 @@ function Ubuntu_()
     # make
 
   info "Installing tensorflow build dependencies ..."
+
   # install bazel
   # see details from https://docs.bazel.build/versions/master/install-ubuntu.html#install-with-installer-ubuntu
   sudo apt-get install -y \
@@ -55,21 +56,49 @@ function Ubuntu_()
      chmod +x ${BAZEL_INSTALLER}
      ./${BAZEL_INSTALLER} --user
      cd ${ROOT}
+     # add bazel path
+     export PATH=$HOME/bin:$PATH
   fi
 }
 
-# install bazel
-Ubuntu_ 
+build_tensorflow() {
+  # install the software
+  info "installing tensorflow"
 
-# add bazel path
-export PATH=$HOME/bin:$PATH
+  VENDER_DIR=${ROOT}/vendors/github.com/tensorflow_cc
+  if [ ! -d ${VENDOR_DIR} ]; then
+    git clone https://github.com/FloopCZ/tensorflow_cc.git "${VENDOR_DIR}"
+  fi
 
-# build tensorflow_cc
-if [ ! -d ${VENDOR_ROOT}/tensorflow_cc ]; then
-git clone https://github.com/FloopCZ/tensorflow_cc.git "${VENDOR_ROOT}/tensorflow_cc"
-fi
-cd ${VENDOR_ROOT}/tensorflow_cc/tensorflow_cc
-mkdir -p build && cd build
-cmake ..
-make 
-sudo make install
+  pushd ${VENDER_DIR}
+  rm -rf build
+  mkdir -p build && cd build
+  cmake ..
+  make # -j${num_cores}
+  sudo make install
+  popd
+}
+
+main() {
+  if [ -f /etc/lsb-release ]; then
+    OS="Ubuntu"
+
+    PLATFORM=linux/deb
+    INSTALLER=apt
+
+    BUILDER_SCRIPT_PREFIX=${ROOT}/scripts/thirdparties/${PLATFORM}/${INSTALLER}
+
+    Ubuntu_
+    num_cores=`expr $(grep -c ^processor /proc/cpuinfo)`
+    if (( $num_cores > 32 )); then
+      num_cores=32
+    fi
+
+    build_tensorflow
+
+  else
+    warn "platform <$(uname -s)> Not supported yet. Please install the package dependencies manually. Pull requests are welcome!"
+  fi
+}
+
+main

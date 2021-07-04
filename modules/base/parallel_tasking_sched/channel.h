@@ -248,9 +248,9 @@ class Channel {
   STATE state_;
 };
 
-        }  // pubsub
-      }  // network
-    }  // pts
-  } // base
+}  // pubsub
+}  // network
+}  // pts
+}  // base
 }  // svso
 #endif /* channel_hpp */

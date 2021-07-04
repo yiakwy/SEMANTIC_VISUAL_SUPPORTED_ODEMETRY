@@ -1,0 +1,42 @@
+syntax = "proto3"; // Our library is using libprotoc-3.8.0
+
+option java_multiple_files=true;
+option java_package = "sensors.io.common.svso";
+option java_outer_classname = "Sensors";
+option objc_class_prefix = "Sensors";
+
+package svso.common.io.sensors;
+
+// also @see https://github.com/ApolloAuto/apollo/blob/master/modules/drivers/lidar/proto/velodyne.proto,
+message LidarHeader {
+  // series type
+  string series_type = 1;
+
+  uint64 timestamp = 2;
+
+  uint32 lines = 3;
+  float horizontal_res = 4;
+  float vertical_res = 5;
+  float detect_depth = 6;
+  float horizontal_span_of_view = 7;
+  float vertical_span_of_view = 8;
+
+  // used for Publish/Subscribe the packet
+  string channel_name = 9;
+}
+
+// defaults to VLP64.
+message VLP {
+  bytes data = 1; // velodyne packet
+
+  // see product official website
+  LidarHeader header = 2;
+}
+
+// default to Jaguar100. In the io module we will depacket data into velodyne returns format
+message RawJaguar {
+  bytes data = 1; // innovusion packet
+
+  // see product official website http://www.innovusion.com/product_show.php?id=392
+  LidarHeader header = 2;
+}
