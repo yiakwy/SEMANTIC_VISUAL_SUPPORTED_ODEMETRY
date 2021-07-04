@@ -11,9 +11,9 @@ const std::string ROOT = "@ROOT@";
 const std::string LOG_DIR = "@LOG_DIR@";
 const std::string OS = "";
 const std::string DATA_DIR = "@DATA_DIR@";
-const bool GLOBAL_DEBUG_SWITCH = "@GLOBAL_DEBUG_SWITCH@";
+const std::string CONF_DIR = "@CONF_DIR@";
 
-} // env_config
-} // system
+    } // env_config
+  } // system
 } // svso
 #endif

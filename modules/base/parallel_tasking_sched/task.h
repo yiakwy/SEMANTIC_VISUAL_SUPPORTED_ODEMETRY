@@ -27,73 +27,146 @@ namespace base {
 // Parallel Tasking Scheduler (PTS)
 namespace pts {
 
-// Warning : I havn't implemented copy and assignment constructor for
-// r-reference (rhs) values.
-// I left job intentionally for the future sprint.
-
 class ThreadPool;
 
-template <typename ReturnType>
+// Used to cast from data address to task instance memory block
 class TaskBase {
- public:
-  using base_type = void;
-  using type = TaskBase;
+public:
+    using Type = TaskBase;
+    using Ptr = std::shared_ptr<Type>;
+    using ConstPtr = std::shared_ptr<const Type>;
 
-  using Ptr = std::shared_ptr<type>;
-  using ConstPtr = std::shared_ptr<const type>;
+    using tid_type = std::thread::id;
 
-  using tid_type = std::thread::id;
+    virtual ~TaskBase() {}
 
-  explicit TaskBase() {}
+    virtual void Reset() = 0;
 
-  virtual void operator()() = 0;
-  /*
-  virtual ReturnType get_future() = 0;
-   */
-  virtual auto get_future() -> std::future<ReturnType> = 0;
+    static tid_type self_thread() {
+        return std::this_thread::get_id();
+    }
 
-  //
-  static tid_type self_thread() { return std::this_thread::get_id(); }
-
-  virtual ~TaskBase() {}
 };
 
 template <typename F, typename... Args>
-class Task : public TaskBase<typename std::result_of<F(Args...)>::type> {
- public:
-  using ReturnType = typename std::result_of<F(Args...)>::type;
-  using base_type = TaskBase<ReturnType>;
-  using type = Task<F, Args...>;
+class Task : public TaskBase {
+public:
+    using Base = TaskBase;
+    using Type = Task<F, Args...>;
+    using Ptr = std::shared_ptr<Type>;
+    using ConstPtr = std::shared_ptr<const Type>;
 
-  using Ptr = std::shared_ptr<type>;
-  using ConstPtr = std::shared_ptr<const type>;
+    using ReturnType = typename std::result_of<F(Args...)>::type;
+    using FutureType = std::future<ReturnType>;
 
-  using FutureType = std::future<ReturnType>;
-  using CallType = std::function<ReturnType(void)>;
+    Task() {}
 
-  explicit Task(F&& f, Args&&... args) {
-    packaged_task_ = std::make_shared<std::packaged_task<ReturnType()>>(
-        std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-  }
+    explicit Task(F& f) {
+        packaged_task_with_args_ = std::make_shared<std::packaged_task<ReturnType(Args...)>>(
+                std::forward<F>(f)
+        );
 
-  explicit Task(F& f, Args&... args) {
-    packaged_task_ = std::make_shared<std::packaged_task<ReturnType()>>(
-        std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-  }
+    }
 
-  virtual ~Task() {}
+    explicit Task(F&& f) {
+        packaged_task_with_args_ = std::make_shared<std::packaged_task<ReturnType(Args...)>>(
+                std::forward<F>(f)
+        );
+    }
 
-  virtual void operator()() override {
-    auto func = [&, this]() { (*packaged_task_)(); };
-    func();
-  }
+    virtual ~Task() {}
 
-  auto get_future() -> std::future<typename std::result_of<F(Args...)>::type> {
-    return packaged_task_->get_future();
-  }
+    // @todo TODO Remove return value, instead return future
+    void operator()(Args &... args) {
+        (*packaged_task_with_args_)(args...);
+    }
 
- protected:
-  std::shared_ptr<std::packaged_task<ReturnType()>> packaged_task_;
+    auto get_future() -> FutureType { // std::future<typename Type::ReturnType>
+        return packaged_task_with_args_->get_future();
+    }
+
+    virtual void Reset() override {
+        packaged_task_with_args_->reset();
+    }
+
+    void from(F& f, Args&... args) {
+        packaged_task_with_args_ = std::make_shared<std::packaged_task<ReturnType()>>(
+                std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+    }
+
+    void from(F&& f, Args&&... args) {
+        packaged_task_with_args_ = std::make_shared<std::packaged_task<ReturnType()>>(
+                std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+    }
+
+    static void* tag(Type* task) {
+        return reinterpret_cast<void*>(task);
+    }
+
+protected:
+    // the input task parameters will be captured by lambda to reduce the coding complexities
+    std::shared_ptr<std::packaged_task<ReturnType(Args...)>> packaged_task_with_args_;
+};
+
+// recover task instance from void*
+// see Usage in lidar/benchmark.h where we store different function as callbacks
+static TaskBase* detag(void* address) {
+    TaskBase* task = (reinterpret_cast<TaskBase*>(address));
+    return task;
+}
+
+class TaskWrapper {
+public:
+    using Type = TaskWrapper;
+    using Ptr = std::shared_ptr<Type>;
+
+    TaskWrapper() {}
+
+    template <typename F, typename... Args>
+    void CreateTask(F& f) {
+        task_ins_.reset(new Task<F, Args...>(f));
+    }
+
+    template <typename F, typename... Args>
+    void CreateTask(F&& f) {
+        task_ins_.reset(new Task<F, Args...>(f));
+    }
+
+    template<typename F, typename...Args>
+    void CreateTaskWithArgs(F& f, Args&... args) {
+        typename Task<F, Args...>::Ptr task(new Task<F, Args...>());
+        task->from(f, args...);
+        task_ins_.reset(task);
+    }
+
+    // @todo Remove return value, instread return future
+    template <typename F, typename... Args>
+    void operator()(Args &... args) {
+        using TaskType = Task<F, Args...>;
+
+        TaskType* task = dynamic_cast<TaskType*>(task_ins_.get());
+        if (task == nullptr) {
+            LOG(FATAL) << "Function type of F is not correct!";
+        }
+        (*task)(args...);
+    }
+
+    template <typename F, typename... Args>
+    auto get_future() -> std::future<typename std::result_of<F(Args...)>::type> {
+        using TaskType = Task<F, Args...>;
+        using FutureType = typename Task<F, Args...>::FutureType;
+
+        TaskType* task = dynamic_cast<TaskType*>(task_ins_.get());
+        FutureType fut = task->get_future();
+        return fut;
+    }
+
+    void Reset() {
+        task_ins_->Reset();
+    }
+
+private:
+    std::shared_ptr<TaskBase> task_ins_;
 };
 
 // extension of intel tbb task group implementation, see issue : https://github.com/oneapi-src/oneTBB/issues/180
@@ -113,32 +186,21 @@ class TBBTaskPoolImpl : public TaskPool {
   virtual ~TBBTaskPoolImpl() {}
 
   template <typename F, typename... Args>
-  void* tag(typename Task<F, Args...>::Ptr task) {
-    void* tag = reinterpret_cast<void*>(&task);
-    return tag;
-  }
-
-  template <typename F, typename... Args>
-  TaskBase<typename std::result_of<F(Args...)>::type>* detag(void* tag) {
-    using ReturnType = typename std::result_of<F(Args...)>::type;
-    TaskBase<ReturnType>* task =
-        (*reinterpret_cast<typename Task<F, Args...>::Ptr*>(tag)).get();
-    return task;
-  }
-
-  template <typename F, typename... Args>
   auto enqueue(F&& f, Args&&... args)
       -> std::future<typename std::result_of<F(Args...)>::type> {
     using ReturnType = typename std::result_of<F(Args...)>::type;
+    using FutureType = std::future<ReturnType>;
+    using FuncType = std::function<void(void)>;
 
-    typename Task<F, Args...>::Ptr task(new Task<F, Args...>(f, args...));
+    TaskWrapper::Ptr task(new TaskWrapper);
+    task->template CreateTaskWithArgs<F, Args...>(f, args...);
 
     // push the task into queue
-    void* tag = tag(task);
-    tasks_.push(tag);
-    typename Task<F, Args...>::FutureType fut = task->get_future();
+
+
+    FutureType fut = task->get_future<F, Args...>();
     task_group_->run([&] {
-        (*task)();
+        (*task).template operator()<FuncType>();
 
     });
     return fut;
@@ -148,7 +210,7 @@ class TBBTaskPoolImpl : public TaskPool {
 
  protected:
   tbb_task_group_t task_group_;
-  tbb::concurrent_queue<void*> tasks_;
+  tbb::concurrent_queue<TaskWrapper::Ptr> tasks_;
 };
 
     }

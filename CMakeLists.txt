@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(Semantic_Relocalization C CXX)
+project(SEMANTIC_VISUAL_SUPPORTED_ODEMETRY C CXX)
 
 set (VERSION_MAJOR 1)
 set (VERSION_MINOR 0)
@@ -95,6 +95,11 @@ if (GCC_SANTINIZER)
   endif()
 endif()
 
+## add tests check target
+add_custom_target(check
+        COMMAND ${CMAKE_CTEST_COMMAND})
+enable_testing()
+
 ## define generated files directory
 
 if (DEFINED ENV{DATA_DIR})
@@ -113,14 +118,17 @@ endif()
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set (CODEC_GEN                      "${CMAKE_BINARY_DIR}/proto_codec")
 set (SRCS_ROOT                      "${PROJECT_SOURCE_DIR}/modules")
 set (ROOT                           "${PROJECT_SOURCE_DIR}")
+set (CONF_DIR                       "${PROJECT_SOURCE_DIR}/config")
+set (PROTO_GEN                      "${CMAKE_BINARY_DIR}/proto_codec")
 
 list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 
 ## Options
 option(GLOBAL_DEBUG_SWITCH "Switch codes to debug mode" TRUE)
+option(CUDA "Enable CUDA" ON)
+option(GTEST "Build GTest test suites" ON)
 
 ## Import dependancies
 include (cmake/Relies.cmake)
@@ -148,4 +156,7 @@ if (GTEST)
   echo ("Building tests ...")
   enable_testing()
   add_subdirectory(tests/gtest)
+else()
+  echo ("GTEST flag is empty. Tests will not be built.")
+  echo ("add -DGTEST=ON if you want build tests")
 endif()

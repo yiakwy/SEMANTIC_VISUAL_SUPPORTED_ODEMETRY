@@ -22,5 +22,5 @@ PointCloudPreprocessor::get_ground_plane(pcl::PointCloud<pcl::PointXYZI>::Ptr& c
     NOT_IMPLEMENTED
 }
 
-} // lidar
+  } // lidar
 } // svso

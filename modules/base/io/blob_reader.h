@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_BLOB_READER_H
-#define SEMANTIC_RELOCALIZATION_BLOB_READER_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_BLOB_READER_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_BLOB_READER_H
 
 #include <iostream>
 #include <memory>
@@ -72,8 +72,74 @@ static bool is_directory(const std::string &file_name) {
     return is_exist(file_name) && fs::is_directory(file_name);
 }
 
+#ifndef __FAILURE
+#define __FAILURE -1
+#endif
+
+#ifndef __SUCC
+#define __SUCC 1
+#endif
+
+class Reader {
+public:
+
+    Reader() {}
+    virtual ~Reader() {}
+
+    // linux inode reader
+    size_t get_length(int fd, const std::string& fn, int* ok) {
+        size_t memory_size;
+
+        if (fd == -1) {
+            LOG(ERROR) << format("Failure to open %s", fn.c_str());
+            close(fd);
+            goto __err_get_length_by_fd__;
+        }
+
+        struct stat attrib;
+        // read info from linux innode metadata
+        if (stat(fn.c_str(), &attrib) < 0) {
+            LOG(ERROR)
+                    << format("Could not find the meta data from the innode of the file[Linux] %s", fn.c_str());
+            close(fd);
+            goto __err_get_length_by_fd__;
+        }
+        memory_size = (size_t) attrib.st_size;
+        return memory_size;
+        __err_get_length_by_fd__:
+        // clean up
+        *ok = __FAILURE;
+        return 0;
+    }
+
+    // linux inode reader
+    size_t get_length(const std::string& fn, int* fd, int*ok) {
+        size_t memory_size;
+
+        if (!is_exist(fn)) {
+            LOG(ERROR) << format("Could not open the file %s", fn.c_str());
+            goto __err_get_length_by_fn__;
+        }
+
+        *fd = open(fn.c_str(), O_RDONLY);
+        if (*fd == -1) {
+            LOG(ERROR) << format("Failure to open %s", fn.c_str());
+            close(*fd);
+            goto __err_get_length_by_fn__;
+        }
+
+        *ok = __SUCC;
+        memory_size = Reader::get_length(*fd, fn, ok);
+        return memory_size;
+        __err_get_length_by_fn__:
+        *ok = __FAILURE;
+        return 0;
+    }
+
+};
+
 template<typename RawProto>
-class BlobReader {
+class BlobReader : public Reader {
 public:
     using RawProtoPtr = std::shared_ptr<RawProto>;
     using RawProtoConstPtr = std::shared_ptr<const RawProto>;
@@ -84,10 +150,6 @@ public:
     }
 
     void Clear() {}
-
-#ifndef FAILURE
-#define FAILURE -1
-#endif
 
     RawProtoConstPtr open_with_mmap(std::string fn) {
         size_t memory_size;
@@ -137,16 +199,15 @@ public:
         }
         return (RawProtoConstPtr)raw_proto;
 
-    __error__:
+        __error__:
         // clean up
-        exit(FAILURE);
+        exit(__FAILURE);
     }
 
 };
 
-
-} // reader
-} // io
-} // base
+      } // reader
+    } // io
+  } // base
 } // svso
-#endif //SEMANTIC_RELOCALIZATION_BLOB_READER_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_BLOB_READER_H

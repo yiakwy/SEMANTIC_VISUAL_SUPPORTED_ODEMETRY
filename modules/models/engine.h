@@ -4,8 +4,8 @@
 
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_ENGINE_H
-#define SEMANTIC_RELOCALIZATION_ENGINE_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_ENGINE_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_ENGINE_H
 
 // Tensorflow building scripts has been updated
 // #include "tensorflow/core/platform/env.h"
@@ -307,4 +307,4 @@ protected:
 }
 
 
-#endif //SEMANTIC_RELOCALIZATION_ENGINE_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_ENGINE_H

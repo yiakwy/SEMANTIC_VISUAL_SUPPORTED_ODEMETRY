@@ -48,7 +48,7 @@ using std::vector;
 #include <opencv2/highgui.hpp>
 
 #include "base/parallel_tasking_sched/task.h"
-#include "base/io/img.h"
+#include "base/io/sensors/img.h"
 
 using namespace svso::system;
 using namespace svso::models;

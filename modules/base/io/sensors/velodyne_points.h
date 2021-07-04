@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_VELODYNE_POINTS_H
-#define SEMANTIC_RELOCALIZATION_VELODYNE_POINTS_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_VELODYNE_POINTS_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_VELODYNE_POINTS_H
 
 #include <iostream>
 #include <memory>
@@ -63,7 +63,7 @@ using std::set;
 
 // math
 #include <base/math/vec3.h>
-#include <base/arrat_like_hasher.h>
+#include <base/array_like_hasher.h>
 
 // logging
 #include <base/logging.h>
@@ -72,13 +72,8 @@ using std::set;
 #include "env_config.h"
 
 #include "devices/velodyne_points.pb.h"
-#include "devices/camera.pb.h"
-
-// local control of debug status regardless of build type
-#ifdef TEST_ON
-#undef TEST_ON
-#endif
-#define TEST_ON env_config::GLOBAL_DEBUG_SWITCH
+#include "base/io/sensors/flags/velodyne_points_flags.h"
+#include "base/flags/all_flags.h"
 
 namespace svso {
 namespace base {
@@ -136,6 +131,8 @@ public:
     PointMeta() {}
     virtual ~PointMeta() {}
 
+    using GridKey = int64_t;
+
     /*
      * meta attributes
      */
@@ -147,8 +144,21 @@ public:
         struct {
             int row_id;
             int col_id;
+            // Used in fitting a line a1*d + a0 = z originating from (0,0) in local sensor coordinate system.
+            // Note for a line (d, z, theta), theta is always constant.
+            float d;
+            float intensity;
         };
     };
+
+    // used for curvature feature extraction
+    int ring_id;
+
+    // used for motion compensation
+    double timestamp;
+
+    GridKey voxel_grid_key;
+    GridKey occpc_grid_key;
 
     enum class PointType {
              UNDEF = 0,
@@ -164,6 +174,23 @@ public:
 
 struct VelodynePointsInitOptions {
     // series type
+    string series_type = "VLP16";
+
+    int lines = 16;
+    float horizontal_res = 0.2;
+    float vertical_res = 2.0;
+    float detect_depth = 280;
+    float horizontal_span_of_view = 360;
+    float vertical_span_of_view = 30;
+    float lowest_angle = 15.0+0.1;
+    // our velodyne is configured with additional angles
+    float device_angle = 3;
+    float minimum_range = 1.0;
+    int threads = -1;
+};
+
+struct InnoPointsInitOptions {
+    // series type
     string series_type = "RawJaguar100";
 
     // see product official website http://www.innovusion.com/product_show.php?id=392
@@ -176,6 +203,24 @@ struct VelodynePointsInitOptions {
     float lowest_angle = 20; // Jaguar100 +-20 degree field of view in vertical direction
     // our Jaguar is configured with additional angles
     float device_angle = 3;
+    float minimum_range = 1.0;
+    int threads = -1;
+};
+
+struct LivoxPointsInitOptions {
+    // series type
+    string series_type = "Horizon|Tel";
+
+    // see product official website https://www.livoxtech.com/horizon
+    int lines = 5;
+    float horizontal_res = 0.08;//0.03;
+    float vertical_res = 0.28;
+    float detect_depth = 1000; // Tel 1000, Horizon 260
+    float horizontal_span_of_view = 2*81.7;
+    float vertical_span_of_view = 25.1;
+    float lowest_angle = 12.55; // Horizon +-12.55 degree field of view in vertical direction
+    // our Jaguar is configured with additional angles
+    float device_angle = -5; // installation angle
     float minimum_range = 1.0;
     int threads = -1;
 };
@@ -209,11 +254,6 @@ public:
         int vertical_scans = init_options_.vertical_span_of_view / init_options_.vertical_res;
         int horizontal_scans = init_options_.horizontal_span_of_view / init_options_.horizontal_res;
         range_image_ = cv::Mat(vertical_scans, horizontal_scans, CV_32F, cv::Scalar::all(FLT_MAX));
-
-        // setup random sampler
-        rng_alg_.seed(static_cast<unsigned> (std::time(nullptr)));
-        rng_dist_.reset (new boost::uniform_int<> (0, std::numeric_limits<int>::max ()));
-        rng_gen_.reset (new boost::variate_generator<boost::mt19937&, boost::uniform_int<> > (rng_alg_, *rng_dist_));
 
         int n_threads = options.threads;
         if (n_threads < 1) {
@@ -335,12 +375,7 @@ public:
                     range_bucket_writer->second = keys;
 
                 } else {
-                    /*
-                    const PointKey& key = range_bucket_reader->second;
-                    if (key != point_key) {
-                        LOG(FATAL) << "Wrong Duplicated Value!";
-                    }
-                     */
+
                     range_bucket_writer->second.insert(point_key);
                     int size = range_bucket_writer->second.size();
                     // use average rangeVal
@@ -358,14 +393,14 @@ public:
         structured_points_->is_dense = true;
 
         // transform the range values probability distribution
-        /*
-         * The operation cost 100 ms in local machine, hence removed
-        range_image_.convertTo(range_image_, CV_8UC1);
-        cv::equalizeHist(range_image_, range_image_);
-          */
+        // The operation is expensive in local machine
+        if (FLAGS_use_ostu_light_equalization) {
+            range_image_.convertTo(range_image_, CV_8UC1);
+            cv::equalizeHist(range_image_, range_image_);
+        }
 
         // for test purpose
-        if (TEST_ON) {
+        if (FLAGS_all_debug) {
             std::string log_dir = format("%s/log/range_images", env_config::LOG_DIR.c_str());;
             fs::path path(log_dir);
             if (!fs::exists(path)) {
@@ -421,22 +456,6 @@ public:
         return range_bucket_;
     }
 
-    /*
-     * get ground samples
-     */
-    enum class SupportedGroundDetectionAlgorithms {
-        SUPPORTED_GROUND_DETECTION_ALGORITHMS_UNDEF = 0,
-        FAST_LINEFIT_ALGORITHM = 1,
-    };
-
-    pcl::PointCloud<PCLPoint>::Ptr EstimatePlane();
-
-    pcl::PointCloud<PCLPoint>::Ptr EstimatePlane(pcl::ModelCoefficients::Ptr& coefficients);
-
-    /*
-     *  STL iterators
-     */
-
 private:
     std::string data_;
 
@@ -451,30 +470,19 @@ private:
     VelodynePointsInitOptions init_options_;
 
     cv::Mat range_image_;
-
-    /*
-     * Parameters for Supported Algorithms
-     */
-    SupportedGroundDetectionAlgorithms ground_detection_algorithm = SupportedGroundDetectionAlgorithms::FAST_LINEFIT_ALGORITHM;
-    pcl::ModelCoefficients::Ptr coefficients_groud_plane_;
-    std::vector<size_t> ground_plane_indices_;
-
-    // Mersenne Twister based random sampler, see tutorial : https://github.com/yiakwy/yiakwy.github.io/tree/master/Computing%20Random%20Variables
-    // this is also the underlying algorithm used inside PCL sampler engine
-    boost::mt19937 rng_alg_;
-    std::shared_ptr<boost::uniform_int<> > rng_dist_;
-    std::shared_ptr<boost::variate_generator< boost::mt19937&, boost::uniform_int<> > > rng_gen_;
-
 private:
     PointMetaBucket point_meta_bucket_;
     RangeBucket range_bucket_;
     std::shared_ptr<tbb::task_scheduler_init> sched_;
 };
 
-
 } // reader
-} // io
-} // base
+
+// @todo : TODO
+namespace writer {} // writer
+
+    } // io
+  } // base
 } // svso
 
 // register the point type to PCL codebase to enable the use of PCL algorithms
@@ -487,4 +495,4 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(svso::base::io::reader::Point3D,
                                  (float, d, d)
                                  (float, intensity, intensity))
 
-#endif //SEMANTIC_RELOCALIZATION_VELODYNE_POINTS_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_VELODYNE_POINTS_H

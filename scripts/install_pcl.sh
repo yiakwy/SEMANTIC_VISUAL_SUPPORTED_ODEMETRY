@@ -63,31 +63,28 @@ sudo apt-get install --no-install-recommends -y \
 # libglfw3-dev depends on libglfw3,
 # and libglew-dev have a dependency over libglew2.0
 
-THREAD_NUM=$(expr `nproc` - 2)
+THREAD_NUM=$(expr `nproc` / 2 - 1)
 
-download_if_not_cached "${PKG_NAME}" "${VERSION}" "${DOWNLOAD_LINK}"
+download_if_not_cached "${PKG_NAME}" "${VERSION}" "${DOWNLOAD_LINK}" pcl-${PKG}
 
 # Ref: https://src.fedoraproject.org/rpms/pcl.git
 #  -DPCL_PKGCONFIG_SUFFIX:STRING="" \
 #  -DCMAKE_SKIP_RPATH=ON \
 
-pushd $VENDOR_DIR/${PKG}/
+pushd $VENDOR_DIR/${PKG_NAME}/
     if [[ ${VERSION} == "1.10.1" ]]; then
       patch -p1 < ${ROOT}/scripts/pcl-sse-fix-${VERSION}.patch
     fi
-    mkdir build && cd build
+    mkdir -p build && cd build
     set +x
     cmake .. \
         "${GPU_OPTIONS}" \
         "${ARCH_OPTIONS}" \
         -DPCL_ENABLE_SSE=ON \
-        -DWITH_DOCS=ON \
-        -DWITH_TUTORIALS=ON \
+        -DWITH_DOCS=OFF \
+        -DWITH_TUTORIALS=OFF \
         -DBUILD_global_tests=ON \
         -DOPENNI_INCLUDE_DIR:PATH=/usr/include/ni \
-        # -DBoost_NO_SYSTEM_PATHS=TRUE \
-        # -DBOOST_ROOT:PATHNAME="${SYSROOT_DIR}" \
-        # -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX="${MAPPING_EXTERNAL_DIR}/${PKG_NAME}" \
         -DCMAKE_BUILD_TYPE=Release
     make -j${THREAD_NUM}

@@ -1,10 +1,10 @@
 //
-// Created by yiak on 2020/7/29.
+// Created by yiak on 2021/7/1.
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_FRAME_H
-#define SEMANTIC_RELOCALIZATION_FRAME_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_FRAME_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_FRAME_H
 
 #include <memory>
 
@@ -15,18 +15,25 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
-#include <base/exceptions.h>
+#include "base/exceptions.h"
 
-#include <base/misc.h>
-#include <base/io/velodyne_points.h>
+#include "base/misc.h"
+#include "base/io/sensors/velodyne_points.h"
+
+#include <boost/filesystem.hpp>
+
+#include "camera.h"
+#include "point3d.h"
 
 namespace svso {
 namespace pose_graph {
 
-using svso::base::exceptions;
-using svso::base::io::reader;
+using namespace svso::base::exceptions;
+using namespace svso::base::io::reader;
+namespace fs = boost::filesystem;
 
 class Frame;
+
 template<typename PCLPoint>
 class LidarFrame;
 
@@ -47,7 +54,7 @@ public:
     bool isFirst = false;
     double timestamp;
 
-    svso::base::Identity identity;
+    base::Identity identity;
     FrameKey key;
 
     // Rigid object movements
@@ -64,6 +71,8 @@ public:
     // Covisibility Graph Toplogy
     std::weak_ptr<Frame> pre;
 
+    static base::AtomicCounter seq;
+
     // Features Expression Layer
     // @todo TODO KeyPoints group
 
@@ -78,7 +87,21 @@ public:
     }
 };
 
+class ImgFrame : public Frame {
+public:
+    using Base = Frame;
+    using Type = ImgFrame;
+    using Ptr = std::shared_ptr<Type>;
+    using ConstPtr = std::shared_ptr<const Type>;
+    using WeakPtr = std::weak_ptr<Type>;
 
+
+
+private:
+    std::string img_src_;
+};
+
+// PCLPoint should be coherent with PointCloudPreprocessor
 template<typename PCLPoint>
 class LidarFrame : public Frame {
 public:
@@ -89,11 +112,14 @@ public:
     using WeakPtr = std::weak_ptr<Type>;
 
     using PointCluster = typename pcl::PointCloud<PCLPoint>::Ptr;
-    using SensorPoints = LivoxPoints;
-    using SensorPointsPtr = LivoxPoints::Ptr;
+    using SensorPoints = VelodynePoints;
+    using SensorPointsPtr = VelodynePoints::Ptr;
+
+private:
+    std::string cloud_src_;
 
 };
 
-} // pose_graph
+  } // pose_graph
 } // svso
-#endif //SEMANTIC_RELOCALIZATION_FRAME_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_FRAME_H

@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_TIMMER_H
-#define SEMANTIC_RELOCALIZATION_TIMMER_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_TIMMER_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_TIMMER_H
 
 #include <sys/time.h>
 #include <chrono>
@@ -176,8 +176,8 @@ inline int64_t TicToc::toc_min(bool tic_after_toc) {
     return min;
 }
 
-} // timmer
-} // base
+    } // timmer
+  } // base
 } // svso
 
-#endif //SEMANTIC_RELOCALIZATION_TIMMER_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_TIMMER_H

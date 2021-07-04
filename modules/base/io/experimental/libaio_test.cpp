@@ -56,7 +56,7 @@
 #include <glog/logging.h>
 #include "base/logging.h"
 
-#include "base/io/img.h"
+#include "base/io/sensors/img.h"
 
 #include "base/parallel_tasking_sched/threading_pool.h"
 

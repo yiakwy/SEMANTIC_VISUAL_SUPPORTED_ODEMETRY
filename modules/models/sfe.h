@@ -3,8 +3,8 @@
 // Updated and Completed by yiakwy on 15/7/20
 //
 
-#ifndef SEMANTIC_RELOCALIZATION_SFE_H
-#define SEMANTIC_RELOCALIZATION_SFE_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_SFE_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_SFE_H
 
 #include <memory>
 #include <string>
@@ -38,9 +38,6 @@ using std::vector;
 // logging utilities
 #include <glog/logging.h>
 #include "base/logging.h"
-
-// Eigen utility
-#include "utils/eigen_util.h"
 
 using namespace svso::base::exceptions;
 using namespace svso::models;
@@ -485,7 +482,7 @@ public:
         // mold input images
         mold_inputs(images, molded_images, images_metas, windows);
 #ifndef NDEBUG
-      LOG(INFO) << "image metas:" << std::endl << eigen_utils::Eigen::pretty_print(images_metas);
+      LOG(INFO) << "image metas:" << std::endl << EigenMatrixFormatter::pretty_print(images_metas);
 #endif
 
         // @todo : TODO
@@ -497,7 +494,7 @@ public:
         Eigen::MatrixXd anchors = std::move( get_anchors(molded_shape) );
 #ifndef NDEBUG
         // Eigen::MatrixXd tmp0 = anchors.block(0, 0, 10, 4);
-      LOG(INFO) << "anchors(cpp computed):" << std::endl << eigen_utils::Eigen::pretty_print( anchors.block(0, 0, 10, 4) );
+      LOG(INFO) << "anchors(cpp computed):" << std::endl << EigenMatrixFormatter::pretty_print( anchors.block(0, 0, 10, 4) );
       LOG(INFO) << "python anchors snapshot(DEBUG):" << R"(
 Out[1]:
 array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
@@ -680,7 +677,7 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
         Eigen::Tensor<float, 2, Eigen::RowMajor> sub_detection = std::move( detection.slice(offset1, size1) );
         eigen_tensor_2_matrix<float, 2>(sub_detection, ret.rois, int(N), 4);
 #ifndef NDEBUG
-        LOG(INFO) << "ret.rois" << std::endl << eigen_utils::Eigen::pretty_print(ret.rois);
+        LOG(INFO) << "ret.rois" << std::endl << EigenMatrixFormatter::pretty_print(ret.rois);
 #endif
 
         std::vector<Eigen::MatrixX<float>> numeric_matrice;
@@ -711,8 +708,8 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
 
 #ifndef NDEBUG
             // Eigen::MatrixXi tmp1 = mask_numeric.block(0,0,1,5);
-            LOG(INFO) << format("subview of numeric_matrice[0]: %s", eigen_utils::Eigen::pretty_print( numeric_matrice[0].block(0, 0, 1, 5) ).c_str() );
-            LOG(INFO) << format("subview of mask_numeric: %s", eigen_utils::Eigen::pretty_print( mask_numeric.block(0,0,1,5) ).c_str() );
+            LOG(INFO) << format("subview of numeric_matrice[0]: %s", EigenMatrixFormatter::pretty_print( numeric_matrice[0].block(0, 0, 1, 5) ).c_str() );
+            LOG(INFO) << format("subview of mask_numeric: %s", EigenMatrixFormatter::pretty_print( mask_numeric.block(0,0,1,5) ).c_str() );
 #endif
 
             ret.mask.push_back(mask_numeric);
@@ -727,7 +724,7 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
             Eigen::Vector4i offset{0, 0, 1, 1};
             // normalized coordiantes
             Eigen::MatrixXf ret = ( box.cast<float>().rowwise() - offset.cast<float>().transpose() ).array().rowwise() / factor.transpose().array();
-            // LOG(INFO) << eigen_utils::Eigen::pretty_print(ret);
+            // LOG(INFO) << EigenMatrixFormatter::pretty_print(ret);
             return ret;
         };
         auto denorm_boxes = [=] (const Eigen::MatrixXf& box, const Eigen::Vector3i& shape) -> Eigen::MatrixXf {
@@ -739,11 +736,11 @@ array([[[-0.02211869, -0.01105934,  0.02114117,  0.01008183],
             return ret;
         };
 #ifndef NDEBUG
-        LOG(INFO) << "window: " << eigen_utils::Eigen::pretty_print(window);
+        LOG(INFO) << "window: " << EigenMatrixFormatter::pretty_print(window);
 #endif
         Eigen::MatrixXf new_window = norm_boxes(window, molded_shape);
 #ifndef NDEBUG
-        LOG(INFO) << "new_window: " << eigen_utils::Eigen::pretty_print(new_window);
+        LOG(INFO) << "new_window: " << EigenMatrixFormatter::pretty_print(new_window);
         LOG(INFO) << "python new window: " << R"(
 Out[2]: array([0.12512219, 0.        , 0.8748778 , 1.        ], dtype=float32)
 )";
@@ -762,7 +759,7 @@ Out[2]: array([0.12512219, 0.        , 0.8748778 , 1.        ], dtype=float32)
         ret.rois = ( ret.rois.rowwise() - offset.transpose() ).array().rowwise() / factor.transpose().array();
 
 #ifndef NDEBUG
-        LOG(INFO) << "rois bbox in normalized coordinates on the window : " << std::endl << eigen_utils::Eigen::pretty_print(ret.rois);
+        LOG(INFO) << "rois bbox in normalized coordinates on the window : " << std::endl << EigenMatrixFormatter::pretty_print(ret.rois);
 #endif
 
         // "Convert boxes to pixel coordinates on the original image(with image_shape)"
@@ -770,7 +767,7 @@ Out[2]: array([0.12512219, 0.        , 0.8748778 , 1.        ], dtype=float32)
 
 #ifndef NDEBUG
         Eigen::MatrixXi tmp0 = std::move( ret.rois.cast<int>() );
-        LOG(INFO) << "denormed mask: " << std::endl << eigen_utils::Eigen::pretty_print( tmp0 );
+        LOG(INFO) << "denormed mask: " << std::endl << EigenMatrixFormatter::pretty_print( tmp0 );
         LOG(INFO) << "python mask snapshot(DEBUG):" << R"(
 Out[1]:
 array([[  0, 227, 123, 358],
@@ -841,7 +838,7 @@ array([[  0, 227, 123, 358],
         Eigen::MatrixXd backbone_shapes = std::move( get_backbone_shapes(image_shape(0), image_shape(1)) );
 
 #ifndef NDEBUG
-        LOG(INFO) << format("backbone_shapes: %s", eigen_utils::Eigen::pretty_print(backbone_shapes).c_str());
+        LOG(INFO) << format("backbone_shapes: %s", EigenMatrixFormatter::pretty_print(backbone_shapes).c_str());
 #endif
 
         // generate anchors
@@ -936,4 +933,4 @@ protected:
     }
 }
 
-#endif //SEMANTIC_RELOCALIZATION_SFE_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_SFE_H

@@ -2,8 +2,8 @@
 // Created by yiak on 2021/4/29.
 //
 
-#ifndef SEMANTIC_RELOCALIZATION_PC_PREPROCESSOR_H
-#define SEMANTIC_RELOCALIZATION_PC_PREPROCESSOR_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_PC_PREPROCESSOR_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_PC_PREPROCESSOR_H
 
 #include <memory>
 #include <string>
@@ -15,7 +15,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 
 #include <pose_graph/frame.h>
-#include <base/io/velodyne_points.h>
+#include <base/io/sensors/velodyne_points.h>
 
 namespace svso {
 namespace lidar {
@@ -101,4 +101,4 @@ private:
 } // lidar
 } // mapping
 
-#endif //SEMANTIC_RELOCALIZATION_PC_PREPROCESSOR_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_PC_PREPROCESSOR_H

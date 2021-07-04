@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_MISC_H
-#define SEMANTIC_RELOCALIZATION_MISC_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_MISC_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_MISC_H
 
 #include <memory>
 #include <string>
@@ -63,7 +63,7 @@ public:
 
     const size_t incr() {
         counter_.fetch_add(1, std::memory_order_relaxed);
-        if (counter_ > std::numeric_limits<size_t>::max())
+        if (counter_ > std::numeric_limits<size_t>::max() - 1)
         {
             // @todo TODO use an array to represent the big number
             LOG(FATAL) << "The counter reaches its maximum in this platform. Please update the software to support arbitrary large number!";
@@ -189,7 +189,7 @@ private:
 
 };
 
-} // base
+  } // base
 } // svso
 
-#endif //SEMANTIC_RELOCALIZATION_MISC_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_MISC_H

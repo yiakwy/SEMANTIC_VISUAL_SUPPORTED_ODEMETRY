@@ -8,22 +8,29 @@ function(echo)
 endfunction()
 
 function(create_test testName)
-    set (testSuitName "test_${testName}")
-    echo ("Creating test ${testSuiteName}")
+    set (testSuiteName "test_${testName}")
+    echo ("Creating GTest test suite ${testSuiteName}...")
+    set (testSuiteSRCPAT "${CMAKE_CURRENT_SOURCE_DIR}/${testName}/*.cpp")
+    file (GLOB_RECURSE testSuiteSRC LIST_DIRECTORIES true "${testSuiteSRCPAT}")
+    echo ("Creating GTest test suite ${testSuiteName} with : ${testSuiteSRC}")
     add_executable(${testSuiteName}
             EXCLUDE_FROM_ALL
             "testMain.cpp"
-            "gtest/${testName}/*.cpp")
+            "${testSuiteSRC}")
 
     target_link_libraries(${testSuiteName}
-            ${GTEST_BOTH_LIBRARIES}
+            base
+            ${testName}
             ${ARGN}
+            ${GMOCK_LIBRARIES}
+            ${GTEST_BOTH_LIBRARIES}
             ${GLOG_LIBRARIES}
             )
-
-    # this will go away once we get rid of catkin
-    add_test(NAME testSuites
-            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testSuiteName}
+    if (ENABLE_COVERAGE EQUAL "ON")
+        target_link_libraries(${testSuiteName} gcov)
+    endif()
+    add_test(NAME ${testSuiteName}
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${testSuiteName}
             )
     add_dependencies(check ${testSuiteName})
 endfunction()
@@ -31,6 +38,7 @@ endfunction()
 # following syntax from bazel add_library
 function(create_libary library_name srcs)
     echo ("Creating library ${library_name}...")
+    include_directories(${PROTO_CODEC})
     add_library(${library_name} SHARED
             ${srcs})
     set_target_properties(${library_name} PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${LIB_LINKER_FLAGS})

@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_VEC3_H
-#define SEMANTIC_RELOCALIZATION_VEC3_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_VEC3_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_VEC3_H
 
 #include <iostream>
 #include <memory>
@@ -123,8 +123,8 @@ public:
     }
 };
 
-} // math
-} // base
+    } // math
+  } // base
 } // svso
 
-#endif //SEMANTIC_RELOCALIZATION_VEC3_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_VEC3_H

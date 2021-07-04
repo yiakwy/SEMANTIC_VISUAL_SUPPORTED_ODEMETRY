@@ -1,5 +1,5 @@
 //
-// Created by LEI WANG on 19-9-9.
+// Created by LEI WANG.
 //
 
 #pragma once
@@ -37,8 +37,8 @@ class WrongValue : public std::exception {
     }
 };
 
-    }
-  }
-}
+    } // exceptions
+  } // base
+} // svso
 
 #endif  // MAPPING_EXCEPTIONS_H

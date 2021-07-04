@@ -13,7 +13,11 @@ sudo aptitude install ros-melodic-desktop-full
 echo "source /opt/ros/melodic/setup.zsh" >> ~/.zshrc
 source ~/.zshrc
 
-sudo apt install -y python-rosinstall python-rosinstall-generator python-wstool
+sudo apt install -y python-rosinstall \
+ python-rosinstall-generator \
+ python-wstool \
+ ros-melodic-catkin \
+ python-catkin-tools
 
 sudo apt install python-rosdep
 

@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_DETECTOR_H
-#define SEMANTIC_RELOCALIZATION_DETECTOR_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_DETECTOR_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_DETECTOR_H
 
 #include <memory>
 
@@ -55,7 +55,7 @@ public:
     void Clear() {}
 };
 
-} // perception
-} // lidar
+    } // perception
+  } // lidar
 } // svso
-#endif //SEMANTIC_RELOCALIZATION_DETECTOR_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_DETECTOR_H

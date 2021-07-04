@@ -9,5 +9,5 @@ namespace base {
 
 AtomicCounter Identity::Sequence{};
 
-} // base
+  } // base
 } // svso

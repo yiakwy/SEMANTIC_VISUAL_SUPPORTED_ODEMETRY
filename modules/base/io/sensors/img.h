@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#ifndef SEMANTIC_RELOCALIZATION_IMG_H
-#define SEMANTIC_RELOCALIZATION_IMG_H
+#ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_IMG_H
+#define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_IMG_H
 
 #include <iostream>
 #include <memory>
@@ -243,10 +243,10 @@ protected:
 } // reader
 
 // @todo : TODO
-namespace writer {}
+namespace writer {} // writer
 
-} // io
-} // base
+    } // io
+  } // base
 } // svso
 
-#endif //SEMANTIC_RELOCALIZATION_IMG_H
+#endif //SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_IMG_H
