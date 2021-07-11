@@ -6,7 +6,7 @@
 # have some problems to use tensorflow 2.0 because many operators
 # are no longer valid. Finally we just update our codes to use 
 # tensorflow 2.0 with 1.x compatible interface.
-tensorflow-gpu==2.2.0
+tensorflow-gpu==2.3.1
 
 matplotlib
 notebook
