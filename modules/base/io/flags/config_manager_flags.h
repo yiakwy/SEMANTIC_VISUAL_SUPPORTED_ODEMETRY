@@ -12,7 +12,7 @@ namespace base {
 namespace io {
 
 DECLARE_string(conf_root);
-DECLARE_string(plus_ai_calib_db_root);
+DECLARE_string(mapping_calib_db_root);
 
     } // io
   } // base

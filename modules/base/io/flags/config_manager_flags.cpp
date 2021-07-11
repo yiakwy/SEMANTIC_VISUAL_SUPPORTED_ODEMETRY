@@ -9,7 +9,7 @@ namespace base {
 namespace io {
 
 DEFINE_string(conf_root, "config_root.yml", "config root file");
-DEFINE_string(plus_ai_calib_db_root, "/opt/plusai/var/calib_db/", "calibration file root");
+DEFINE_string(mapping_calib_db_root, "/opt/deploy/svso/var/", "calibration file root");
 
     } // io
   } // base

@@ -47,7 +47,7 @@ using namespace svso::base::exceptions;
 using namespace svso::base::logging;
 namespace fs = boost::filesystem;
 
-// This types will be used in ConfigManager, HDMapIO (visual part processing pipeline)
+// This types will be used in ConfigManager, HDMapIO (visual part processing pipeline) and SVSO cpp POC project
 using Scalar = boost::variant<int, size_t, float, double>;
 
 class Number {
@@ -57,6 +57,12 @@ public:
     Number() {}
     template<typename type_t>
     explicit Number(type_t val_in): val(val_in) {};
+
+    template<typename type_t>
+    Number& operator=(type_t val_in) {
+        val = val_in;
+        return *this;
+    }
 };
 
 class String {
@@ -66,6 +72,16 @@ public:
     String() {}
     explicit String(const char* val_in) : val(val_in) {}
     explicit String(const std::string& val_in) : val(val_in) {}
+
+    String& operator=(const char* val_in) {
+        val = val_in;
+        return *this;
+    }
+
+    String& operator=(const std::string& val_in) {
+        val = val_in;
+        return *this;
+    }
 };
 
 class Boolean {
@@ -75,6 +91,10 @@ public:
     explicit Boolean() {}
     explicit Boolean(bool val_in) : val(val_in) {}
 
+    Boolean& operator=(bool val_in) {
+        val = val_in;
+        return *this;
+    }
 };
 
 // immutable
@@ -105,7 +125,7 @@ public:
 
     /*
      * @todo TODO attributes accessor
-     * @todo TODO use concurrent hash map to enable setting and gettng concurrently
+     * @todo TODO use concurrent hash map to enable setting and getting concurrently
      */
     void insert(const std::string& key, ObjectPtr val) {
         attrs[key] = val;

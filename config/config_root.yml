@@ -1,0 +1,10 @@
+%YAML:1.0
+
+numberOfConf: 1
+version : "1.0.0"
+conf:
+  calibration:
+    device :
+      yaml_path : test_data/20210703/test_device.yaml
+  modules:
+    - yaml_path : modules.yaml
