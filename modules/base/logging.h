@@ -55,7 +55,7 @@ void Init_GLog(int argc, const char** argv);
 string format(const char* fmt, ...);
 #endif
 
-// avoid non-explicit conversion from char* to std::string, and of course you cannot do the vice versa @yiawy
+// avoid non-explicit conversion from char* to std::string, and of course you cannot do the vice versa @yiakwy
 template<typename T, typename... Args>
 string format(T fmt, typename std::enable_if<std::is_same<T, std::string>::value, T>::type* = 0, Args... args)
 {

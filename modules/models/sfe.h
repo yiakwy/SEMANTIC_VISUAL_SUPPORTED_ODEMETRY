@@ -905,18 +905,6 @@ protected:
     struct _hasher : std::unary_function<T, size_t> {
         std::size_t operator()(T const & shape) const {
             size_t ret = 0;
-//            if (std::is_same<T, Eigen::Tensor<int, 1>>::value) {
-//                typename T::Dimensions dims = shape.dimensions();
-//                for (size_t i=0; i < dims[0]; i++) {
-//                    ret ^= std::hash<typename T::Scalar>()( shape(i) ) + 0x9e3779b9 + (ret << 6) + (ret >> 2);
-//                }
-//            } else {
-//                // treat T as Eigen::Matrix<Scalar, ...>
-//                for (size_t i=0; i < shape.size(); i++)
-//                {
-//                    ret ^= std::hash<typename T::Scalar>()( shape(i) ) + 0x9e3779b9 + (ret << 6) + (ret >> 2);
-//                }
-//            }
             for (size_t i=0; i < shape.size(); i++)
             {
                 ret ^= std::hash<typename T::Scalar>()( shape(i) ) + 0x9e3779b9 + (ret << 6) + (ret >> 2);

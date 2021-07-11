@@ -96,7 +96,6 @@ public:
     using WeakPtr = std::weak_ptr<Type>;
 
 
-
 private:
     std::string img_src_;
 };

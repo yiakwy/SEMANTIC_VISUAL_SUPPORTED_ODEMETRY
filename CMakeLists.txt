@@ -38,6 +38,13 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -march=native")
 # Add it for debug convenience, freshly added
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
+# setting compiling config
+
+# by default build debug version
+if(NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif(NOT DEFINED CMAKE_BUILD_TYPE)
+
 include(cmake/Utils.cmake)
 
 if (UNIX OR APPLE)

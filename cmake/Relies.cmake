@@ -112,6 +112,14 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 list(APPEND CMAKE_INSTALL_RPATH "${PCL_LIBRARY_DIRS}")
 
+# YAML
+list(APPEND CMAKE_PREFIX_PATH "${MAPPING_EXTERNAL_DIR}/yaml-cpp/lib/cmake/yaml-cpp/")
+find_package(YAML-CPP REQUIRED)
+echo("YAML_CPP_INCLUDE_DIR: ${YAML_CPP_INCLUDE_DIR}")
+include_directories(${YAML_CPP_INCLUDE_DIR})
+echo("YAML_CPP_LIBRARIES: ${YAML_CPP_LIBRARIES}")
+link_libraries(${YAML_CPP_LIBRARIES})
+
 #[[
 # GTSAM
 set(GTSAM_DIR ${EXTERNAL_LIBS_DIR}/gtsam)

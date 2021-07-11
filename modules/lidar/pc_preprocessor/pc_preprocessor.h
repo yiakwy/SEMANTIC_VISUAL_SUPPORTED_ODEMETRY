@@ -1,6 +1,7 @@
 //
 // Created by yiak on 2021/4/29.
 //
+#pragma once
 
 #ifndef SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_PC_PREPROCESSOR_H
 #define SEMANTIC_VISUAL_SUPPORTED_ODEMETRY_PC_PREPROCESSOR_H
@@ -8,10 +9,25 @@
 #include <memory>
 #include <string>
 
+#include <unordered_map>
+using std::unordered_map;
+using std::pair;
+
+#include <thread>
+#include <mutex>
+/*
+#include <shared_mutex> // available in c++14
+ */
+#include <condition_variable>
+#include <functional>
+#include <future>
+
+#include <boost/filesystem.hpp>
+
 // pcl
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/pcd_io.h>
-// we are not going to use it
+// This is the baseline algorithm, and we are going to use my new algorithm c
 #include <pcl/segmentation/sac_segmentation.h>
 
 #include <pose_graph/frame.h>
@@ -25,12 +41,17 @@ using namespace svso::base::io::reader;
 struct PointCloudPreprocessorInitOptions {
     std::string sensor_name = "RawJaguar"; //need options
     std::string series_type = "RawJaguar100";
-    bool is_imu_insie = true;
+    bool is_imu_inside = true;
 };
 
 struct PointCloudPreprocessorOptions {
     // LIDAR-IMU extrinsic values for external IMU
     Eigen::Affine3d sensor2novatel_extrinsics;
+    // used for motion compensation, this is especially important for highway mapping
+    // typically duration for a sweep 0.1s both for Livox and traditional Velodyne VLP series
+    double delta = 0.1;
+    bool use_wheel_odem = true;
+    bool linear_interpolation = true;
 };
 
 
@@ -41,7 +62,7 @@ public:
     using ConstPtr = std::shared_ptr<const Type>;
 
     using PCLPoint = Point3D;
-    using LidarFrame = mapping::pose_graph::LidarFrame<PCLPoint>;
+    using LidarFrame = svso::pose_graph::LidarFrame<PCLPoint>;
 
     PointCloudPreprocessor() { Init(); };
     bool Init();

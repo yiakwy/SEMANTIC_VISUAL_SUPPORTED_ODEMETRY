@@ -17,7 +17,7 @@ using std::pair;
 
 // The module is adapted from Apollo.auto moudules/perception/lib/registerer.h
 //  see: https://github.com/ApolloAuto/apollo/blob/master/modules/perception/lib/registerer/registerer.h
-// Note the solution dependｓ on GCC compiler "__attributes__" and we prefer a runtime implementation
+// Note the solution depends on GCC compiler "__attributes__" and we prefer a runtime implementation
 // of a Class register here for simplicity.
 
 namespace svso {
@@ -60,7 +60,7 @@ inline Registry<BaseClass>& get_registry() {
 
 #define MODEL_REGISTER_SUBCLASS(base_klass, derived_klass)                     \
     namespace {                                                                \
-      using namespace mapping::base;                                           \
+      using namespace svso::base;                                           \
       class derived_klass##Factory : public AnyFactory {                       \
         public:                                                                \
           virtual ~derived_klass##Factory() {}                                 \

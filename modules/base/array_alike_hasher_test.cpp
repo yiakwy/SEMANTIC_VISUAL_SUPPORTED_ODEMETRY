@@ -40,6 +40,12 @@ void test_array_alike_hasher() {
     test_eigen_vector[2] = 2;
     size_t ret_of_test_eigen_vector = svso::base::_hasher().template operator()<Eigen::VectorXi>(test_eigen_vector);
 
+    Eigen::Tensor<int, 1> test_tensor(3);
+    test_tensor(0) = 1;
+    test_tensor(1) = 2;
+    test_tensor(2) = 3;
+    size_t ret_of_test_tensor = svso::base::_hasher().template operator()<Eigen::Tensor<int, 1>>(test_tensor);
+
     std::pair<int, int> test_pair;
     test_pair.first = 0;
     test_pair.second = 1;

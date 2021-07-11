@@ -207,6 +207,7 @@ struct InnoPointsInitOptions {
     int threads = -1;
 };
 
+// we will concentrate livox devices afterwards
 struct LivoxPointsInitOptions {
     // series type
     string series_type = "Horizon|Tel";
@@ -238,7 +239,7 @@ public:
     void Clear() {}
 
     using PCLPoint = pcl::PointXYZI;
-    using InitOptions = VelodynePointsInitOptions;
+    using InitOptions = LivoxPointsInitOptions;
 
     // used for upgrading to LidarFrame
     using PointKey = size_t;
@@ -467,7 +468,7 @@ private:
     pcl::PointCloud<Point3D>::Ptr structured_points_;
 
     // estimated structure parameters for the point cloud
-    VelodynePointsInitOptions init_options_;
+    InitOptions init_options_;
 
     cv::Mat range_image_;
 private:

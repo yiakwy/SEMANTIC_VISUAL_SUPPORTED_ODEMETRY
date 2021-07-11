@@ -11,6 +11,7 @@ echo ("PROTOBUF_LIBRARIES: ${PROTOBUF_LIBRARIES}")
 
 list(REMOVE_ITEM FILES "${CMAKE_CURRENT_SOURCE_DIR}/io/experimental/libaio_test.cpp")
 list(REMOVE_ITEM FILES "${CMAKE_CURRENT_SOURCE_DIR}/array_alike_hasher_test.cpp")
+list(REMOVE_ITEM FILES "${CMAKE_CURRENT_SOURCE_DIR}/io/config_manager_test.cpp")
 ##### Base #####
 
 # for base library, instead of using `create_tool`, we keep maximum flexibility to modify configuration
@@ -82,3 +83,13 @@ target_link_libraries(array_alike_hasher_test
         PUBLIC
         ${PROJECT_NAME}
         )
+
+### config manager test
+add_executable(config_manager_test
+        io/config_manager_test.cpp)
+
+# add links
+set_target_properties(config_manager_test PROPERTIES LINKER_LANGUAGE CXX PRIVATE "${LIB_LINKER_FLAGS}")
+target_link_libraries(config_manager_test
+        PUBLIC
+        ${PROJECT_NAME})

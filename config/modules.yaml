@@ -1,0 +1,19 @@
+%YAML:1.0
+
+lidar:
+  pc_preprocessor:
+    prototxt: pointcloud_preprocessor.conf
+  detectors:
+    ground:
+      prototxt:
+        - ground.conf
+    object:
+      prototxt:
+        - object.conf
+        - pointpillar.conf
+        - pointrcnn.conf
+msgs_node:
+  ros:
+    prototxt: bag_interface_sim_driver_node.conf
+  cyber:
+    prototxt: bag_interface_sim_driver_node.conf

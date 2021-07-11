@@ -58,49 +58,29 @@ struct _hasher {
 
     template<typename T>
     std::size_t operator()(T const & shape,
+                           typename std::enable_if<std::is_same<T, Eigen::Tensor<typename T::Scalar, 1>>::value, T>::type* = nullptr)
+    {
+        using IndexScalar = typename T::Scalar;
+        size_t ret = 0;
+        typename T::Dimensions dims = shape.dimensions();
+        for (size_t i=0; i < dims[0]; i++) {
+            ret ^= std::hash<typename T::Scalar>()( shape(i) ) + SEED + (ret << 6) + (ret >> 2);
+        }
+        return ret;
+    }
+
+    template<typename T>
+    std::size_t operator()(T const & shape,
             typename std::enable_if<std::is_same<T,
                                                  std::pair<typename T::first_type,
                                                            typename T::second_type>>::value, T>::type* = nullptr)
     {
         size_t ret = 0;
-        ret ^= std::hash<typename T::first_type>()( (&shape)->first  ) + SEED + (ret << 6) + (ret >> 2);
+        ret ^= std::hash<typename T::first_type>() ( (&shape)->first  ) + SEED + (ret << 6) + (ret >> 2);
         ret ^= std::hash<typename T::second_type>()( (&shape)->second ) + SEED + (ret << 6) + (ret >> 2);
         return ret;
     }
 
-    /*
-    std::size_t operator()(T const & shape) const {
-        using IndexScalar = int;
-        size_t ret = 0;
-
-        if (std::is_same<T, Eigen::Tensor<IndexScalar, 1>>::value) {
-            typename T::Dimensions dims = shape.dimensions();
-            for (size_t i=0; i < dims[0]; i++) {
-                ret ^= std::hash<typename T::Scalar>()( shape(i) ) + SEED + (ret << 6) + (ret >> 2);
-            }
-        } else
-        if (std::is_same<T, Eigen::Matrix<IndexScalar, Eigen::Dynamic, 1>>::value) {
-            for (size_t i=0; i < shape.size(); i++)
-            {
-                ret ^= std::hash<typename T::Scalar>()( shape(i) ) + SEED + (ret << 6) + (ret >> 2);
-            }
-        } else
-
-        if (std::is_same<T, std::pair<IndexScalar, IndexScalar>>::value) {
-            ret ^= std::hash<IndexScalar>()( (&shape)->first  ) + SEED + (ret << 6) + (ret >> 2);
-            ret ^= std::hash<IndexScalar>()( (&shape)->second ) + SEED + (ret << 6) + (ret >> 2);
-        }
-        // treat T as general array
-        else {
-            for (size_t i=0; i < shape.size(); i++)
-            {
-                ret ^= std::hash<typename T::Scalar>()( shape(i) ) + SEED + (ret << 6) + (ret >> 2);
-            }
-        }
-
-        return ret;
-    }
-    */
 };
 
 template<typename T>
