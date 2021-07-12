@@ -2,6 +2,9 @@
 // Created by yiak on 2021/4/29.
 //
 
+#include <pcl/common/centroid.h>
+#include <pcl/common/eigen.h>
+
 #include "detector.h"
 
 namespace svso {
@@ -11,6 +14,7 @@ namespace perception {
 void SequentialSACLinefitGroundEstimateImpl::EstimatePlane(const pcl::PointCloud<PCLPoint>& structured_points) {
     // copy the header information
     inliers_->header = coefficients_->header = structured_points.header;
+    input_ = (pcl::PointCloud<PCLPoint>*)(&structured_points);
 
     inliers_->indices.clear();
     coefficients_->values.clear();
@@ -24,6 +28,7 @@ void SequentialSACLinefitGroundEstimateImpl::EstimatePlane(const pcl::PointCloud
         LOG(WARNING) << "No valid guess is set.";
         last_guess_.reset(new pcl::ModelCoefficients);
         MaxIters = FLAGS_max_iterations;
+        sqrt_dist_error_ = std::numeric_limits<double>::max() - 1;
     }
 
     // Indices samples;
@@ -39,6 +44,7 @@ void SequentialSACLinefitGroundEstimateImpl::EstimatePlane(const pcl::PointCloud
             last_guess_->values[1],
             last_guess_->values[2],
             last_guess_->values[3];
+    double last_sqrt_dist_error = sqrt_dist_error_;
 
     // iteration choosing algorithms from PCL Ransac
     double k = 1.0;
@@ -63,12 +69,30 @@ void SequentialSACLinefitGroundEstimateImpl::EstimatePlane(const pcl::PointCloud
         }
     };
 
+    // linefit estimator
+    std::vector<int> pole_line_indices_mask;
+    std::vector<int> pole_line_indices;
+
+    LinefitGroundSegmentInitOptions init_options;
+    LinefitGroundSegment line_fit_ground_segmentor(init_options);
+
+    line_fit_ground_segmentor.segment(structured_points, &pole_line_indices_mask);
+
+    pcl::PointCloud<PCLPoint>::Ptr ground_sample(new pcl::PointCloud<PCLPoint>);
+    for (size_t i=0; i < structured_points.size(); ++i) {
+        if (pole_line_indices_mask[i] == 1) {
+            ground_sample->push_back( structured_points[i] );
+            pole_line_indices.push_back(i);
+            inliers_->indices.push_back(i);
+        }
+    }
+
     // main loop
     while (i < MaxIters-1 && skipped_count < max_skip) {
         i++;
 
         if (i==0) {
-            selectWithinDistance(refined_model_coefficients, thresh_, inliers_->indices);
+            double sqrt_dist_err = selectWithinDistance(refined_model_coefficients, thresh_, inliers_->indices);
             for (size_t j=0; j < sample_size; j++) {
                 best_selection.push_back(inliers_->indices[j]);
             }
@@ -80,20 +104,20 @@ void SequentialSACLinefitGroundEstimateImpl::EstimatePlane(const pcl::PointCloud
             if (max_skip > k) {
                 // using our guessed iterations
                 max_skip = k;
-                LOG(INFO) << "[SequentialSACSegment] guessed iterations are used for skipping : " << max_skip;
+                LOG(INFO) << "[SequentialSACLinefitGroundEstimateImpl::EstimatePlane] guessed iterations are used for skipping : " << max_skip;
             }
         } else {
-            // perform refinement and use random samples
-            getSamples(i, samples);
+            // perform refinement and use heuristic samples instead of random samples
+            getHeuristicSamples(i, samples, pole_line_indices);
         }
         if (samples.empty()) {
-            LOG(ERROR) << format("[pcl::RandomSampleConsensus::computeModel] No samples could be selected!\n");
+            LOG(ERROR) << format("[SequentialSACLinefitGroundEstimateImpl::EstimatePlane] No samples could be selected!\n");
             break;
         }
 
-        if (!computeModelCoefficients(samples, coeff)) {
+        if (!computeModelCoefficients(samples, coeff, structured_points)) {
             ++skipped_count;
-            PCL_ERROR("[pcl::RandomSampleConsensus::computeModel] No coefficients could be estimated!\n");
+            LOG(ERROR) << format("[SequentialSACLinefitGroundEstimateImpl::EstimatePlane] No coefficients could be estimated!\n");
             continue;
         }
 
@@ -133,28 +157,136 @@ void SequentialSACLinefitGroundEstimateImpl::EstimatePlane(const pcl::PointCloud
 // implement these methods with the add of  linefit algorithm
 
 void
-SequentialSACLinefitGroundEstimateImpl::getSamples(int i, std::vector<int>& samples) {
+SequentialSACLinefitGroundEstimateImpl::getHeuristicSamples(int i, std::vector<int>& samples, const std::vector<int>& estimates) {
+    size_t size = estimates.size();
+    samples.clear();
 
+    auto rnd = [=]() {
+        return ((*rng_gen_)()) % size;
+    };
+
+    for (int i=0; i < 4; i++) {
+        samples.push_back(estimates[rnd()]);
+    }
 }
 
-void
+double
 SequentialSACLinefitGroundEstimateImpl::selectWithinDistance(const Eigen::VectorXf& coefficients, double thresh, vector<int>& indices) {
+    size_t size = (*input_).size();
 
+    indices.clear();
+    indices.resize(size);
+
+    size_t j=0;
+    double sqrt_dist_error = 0.0;
+    for (size_t i=0; i < size; i++) {
+        auto pt = (*input_).points[i];
+        Eigen::Vector4f h_p;
+        h_p << pt.x, pt.y, pt.z, 1;
+        float dist_to_plane = fabsf(coefficients.dot(h_p));
+        if (dist_to_plane < thresh) {
+            indices[j] = i;
+            sqrt_dist_error += dist_to_plane;
+            j++;
+        }
+    }
+
+    CHECK(size > 0);
+    sqrt_dist_error /= size;
+    return sqrt_dist_error;
 }
 
 bool
-SequentialSACLinefitGroundEstimateImpl::computeModelCoefficients(const std::vector<int>& samples, Eigen::VectorXf& coeff) {
+SequentialSACLinefitGroundEstimateImpl::computeModelCoefficients(const std::vector<int>& samples, Eigen::VectorXf& coeff, const pcl::PointCloud<PCLPoint>& structured_points) {
+    Point3D p[3];
+    Eigen::Vector3f p0p1;
+    Eigen::Vector3f p0p2;
 
+    CHECK(samples.size() >= 4 );
+
+    p[0] = structured_points.at(samples[0]);
+    p[1] = structured_points.at(samples[1]);
+    p[2] = structured_points.at(samples[2]);
+
+    p0p1 = p[1].vec3f - p[0].vec3f;
+    p0p2 = p[2].vec3f - p[0].vec3f;
+
+    // check collinearity
+    Eigen::Vector3f ratios = p0p1.array() / (p0p2.array() + 1e-3);
+    if (ratios[0] == ratios[1] && ratios[1] == ratios[2]) {
+        // bad samples, resample
+        return false;
+    }
+
+    Eigen::Vector3f n = p0p1.cross(p0p2);
+    if (n[2] < 0) {
+        n = n * -1;
+    }
+    n.normalize();
+    coeff[0] = n[0];
+    coeff[1] = n[1];
+    coeff[2] = n[2];
+    coeff[3] = -1.0f * (n.dot(p[0].vec3f));
+    return true;
 }
 
 size_t
 SequentialSACLinefitGroundEstimateImpl::countWithinDistance(const Eigen::VectorXf& coeff, double thresh) {
+    size_t size = (*input_).size();
 
+    size_t j=0;
+
+    for (size_t i=0; i < size; i++) {
+        auto pt = (*input_).points[i];
+        Eigen::Vector4f h_p;
+        h_p << pt.x, pt.y, pt.z, 1;
+        float dist_to_plane = fabsf(coeff.dot(h_p));
+        if (dist_to_plane < thresh) {
+            j++;
+        }
+    }
+
+    return j;
 }
 
 void
 SequentialSACLinefitGroundEstimateImpl::optimizeModelCoefficients(vector<int>& indices, const Eigen::VectorXf& coeff, Eigen::VectorXf& coeff_refined) {
+    // Needs a valid set of model coefficients
+    if (coeff.size () != 4)
+    {
+        LOG(ERROR) << format("[SequentialSACLinefitGroundEstimateImpl::optimizeModelCoefficients] Invalid number of model coefficients given (%lu)!\n", coeff.size ());
+        coeff_refined = coeff;
+        return;
+    }
 
+    // Need more than the minimum sample size to make a difference
+    if (indices.size() < 3)
+    {
+        LOG(ERROR) << format("[SequentialSACLinefitGroundEstimateImpl::optimizeModelCoefficients] Not enough inliers found to optimize model coefficients (%lu)! Returning the same coefficients.\n", indices.size());
+        coeff_refined = coeff;
+        return;
+    }
+
+    Eigen::Vector4f plane_parameters;
+
+    // Use Least-Squares to fit the plane through all the given sample points and find out its coefficients
+    EIGEN_ALIGN16 Eigen::Matrix3f covariance_matrix;
+    Eigen::Vector4f xyz_centroid;
+
+    pcl::computeMeanAndCovarianceMatrix (*input_, indices, covariance_matrix, xyz_centroid);
+
+    // Compute the model coefficients
+    EIGEN_ALIGN16 Eigen::Vector3f::Scalar eigen_value;
+    EIGEN_ALIGN16 Eigen::Vector3f eigen_vector;
+    pcl::eigen33 (covariance_matrix, eigen_value, eigen_vector);
+
+    // Hessian form (D = nc . p_plane (centroid here) + p)
+    coeff_refined.resize (4);
+    coeff_refined[0] = eigen_vector [0];
+    coeff_refined[1] = eigen_vector [1];
+    coeff_refined[2] = eigen_vector [2];
+    coeff_refined[3] = 0;
+    coeff_refined[3] = -1 * coeff_refined.dot (xyz_centroid);
 }
 
     } // perception

@@ -33,11 +33,16 @@ void Segment::fitSegmentLines() {
             return;
         }
     }
+
     // Fill lines.
     bool is_long_line = false;
+    // Note this parameter is very important to reproduce the core algorithm and our algorithm requires z axis up, which
+    // is already handled automatically by pointcloud_preprocessor
     double cur_ground_height = -sensor_height_;
     std::list<Bin::MinZPoint> current_line_points(1, line_start->getMinZPoint());
-    LocalLine cur_line = std::make_pair(0,0);
+    Coefficents cur_line = std::make_pair(0, 0);
+
+    // Loop though bins in this sector and add min z points in Polar coordinates to fit pole lines
     for (auto line_iter = line_start+1; line_iter != bins_.end(); ++line_iter) {
         if (line_iter->hasPoint()) {
             Bin::MinZPoint cur_point = line_iter->getMinZPoint();
@@ -50,18 +55,19 @@ void Segment::fitSegmentLines() {
                     expected_z = cur_line.first * cur_point.d + cur_line.second;
                 }
                 current_line_points.push_back(cur_point);
-                cur_line = fitLocalLine(current_line_points);
+                cur_line = fitPoleline(current_line_points);
                 const double error = getMaxError(current_line_points, cur_line);
+
                 // Check if not a good line.
                 if (error > max_error_ ||
                     std::fabs(cur_line.first) > max_slope_ ||
                     (is_long_line && std::fabs(expected_z - cur_point.z) > max_long_height_)) {
-                    // Add line until previous point as ground.
+                    // Reject the current minz point
                     current_line_points.pop_back();
-                    // Don't let lines with 2 base points through.
+                    // Record lines with number of points greater than 3
                     if (current_line_points.size() >= 3) {
-                        const LocalLine new_line = fitLocalLine(current_line_points);
-                        lines_.push_back(localLineToLine(new_line, current_line_points));
+                        const Coefficents new_line = fitPoleline(current_line_points);
+                        lines_.push_back(getPoleline(new_line, current_line_points));
                         cur_ground_height = new_line.first * current_line_points.back().d + new_line.second;
                     }
                     // Start new line.
@@ -69,8 +75,6 @@ void Segment::fitSegmentLines() {
                     current_line_points.erase(current_line_points.begin(), --current_line_points.end());
                     --line_iter;
                 }
-                    // Good line, continue.
-                else { }
 
             }
             else {
@@ -90,13 +94,13 @@ void Segment::fitSegmentLines() {
     }
     // Add last line.
     if (current_line_points.size() > 2) {
-        const LocalLine new_line = fitLocalLine(current_line_points);
-        lines_.push_back(localLineToLine(new_line, current_line_points));
+        const Coefficents new_line = fitPoleline(current_line_points);
+        lines_.push_back(getPoleline(new_line, current_line_points));
     }
 }
 
-Segment::Line Segment::localLineToLine(const LocalLine& local_line,
-                                       const std::list<Bin::MinZPoint>& line_points) {
+Segment::Line Segment::getPoleline(const Coefficents& local_line,
+                                   const std::list<Bin::MinZPoint>& line_points) {
     Line line;
     const double first_d = line_points.front().d;
     const double second_d = line_points.back().d;
@@ -123,7 +127,7 @@ double Segment::verticalDistanceToLine(const double &d, const double &z) {
     return distance;
 }
 
-double Segment::getMeanError(const std::list<Bin::MinZPoint> &points, const LocalLine &line) {
+double Segment::getMeanError(const std::list<Bin::MinZPoint> &points, const Coefficents &line) {
     double error_sum = 0;
     for (auto it = points.begin(); it != points.end(); ++it) {
         const double residual = (line.first * it->d + line.second) - it->z;
@@ -132,7 +136,7 @@ double Segment::getMeanError(const std::list<Bin::MinZPoint> &points, const Loca
     return error_sum/points.size();
 }
 
-double Segment::getMaxError(const std::list<Bin::MinZPoint> &points, const LocalLine &line) {
+double Segment::getMaxError(const std::list<Bin::MinZPoint> &points, const Coefficents &line) {
     double max_error = 0;
     for (auto it = points.begin(); it != points.end(); ++it) {
         const double residual = (line.first * it->d + line.second) - it->z;
@@ -142,7 +146,7 @@ double Segment::getMaxError(const std::list<Bin::MinZPoint> &points, const Local
     return max_error;
 }
 
-Segment::LocalLine Segment::fitLocalLine(const std::list<Bin::MinZPoint> &points) {
+Segment::Coefficents Segment::fitPoleline(const std::list<Bin::MinZPoint> &points) {
     const unsigned int n_points = points.size();
     Eigen::MatrixXd X(n_points, 2);
     Eigen::VectorXd Y(n_points);
@@ -154,7 +158,7 @@ Segment::LocalLine Segment::fitLocalLine(const std::list<Bin::MinZPoint> &points
         ++counter;
     }
     Eigen::VectorXd result = X.colPivHouseholderQr().solve(Y);
-    LocalLine line_result;
+    Coefficents line_result;
     line_result.first = result(0);
     line_result.second = result(1);
     return line_result;

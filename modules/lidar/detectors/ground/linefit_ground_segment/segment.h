@@ -1,5 +1,8 @@
 //
 // Created by yiak on 2021/7/5.
+//  Adapted from original codebase https://github.com/lorenwel/linefit_ground_segmentation
+//  to replace PCL SACSegmentation algorithm
+// Credits to original author
 //
 #pragma once
 
@@ -16,10 +19,12 @@ namespace svso {
 namespace lidar {
 namespace perception {
 
+// we prefer use Sector instead of Segment in program while keep original name style from Linefit Ground Segmentation method
 class Segment {
 public:
     using Line = std::pair<Bin::MinZPoint, Bin::MinZPoint>;
-    using LocalLine = std::pair<double, double>;
+    // z = a1 * d + a0 for polar line
+    using Coefficents = std::pair<double, double>;
 
     Segment(const unsigned int& n_bins,
             const double& max_slope,
@@ -48,13 +53,13 @@ public:
     bool getLines(std::list<Line>* lines);
 
 private:
-    LocalLine fitLocalLine(const std::list<Bin::MinZPoint>& points);
+    Coefficents fitPoleline(const std::list<Bin::MinZPoint>& points);
 
-    double getMeanError(const std::list<Bin::MinZPoint>& points, const LocalLine& line);
+    double getMeanError(const std::list<Bin::MinZPoint>& points, const Coefficents& line);
 
-    double getMaxError(const std::list<Bin::MinZPoint>& points, const LocalLine& line);
+    double getMaxError(const std::list<Bin::MinZPoint>& points, const Coefficents& line);
 
-    Line localLineToLine(const LocalLine& local_line, const std::list<Bin::MinZPoint>& line_points);
+    Line getPoleline(const Coefficents& local_line, const std::list<Bin::MinZPoint>& line_points);
 
 private:
     // Parameters. Description in GroundSegmentation.

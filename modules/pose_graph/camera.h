@@ -57,14 +57,14 @@ public:
             cx = camera_node["cx"];
             cy = camera_node["cy"];
             camera_node["distortion"] >> distortion_tmp;
-            distortion = Eigen::Matrix<double, 4, 1>::Identity(4, 1);
+            distortion = Eigen::Matrix<double, 5, 1>::Identity(5, 1);
             cv::cv2eigen(distortion_tmp, distortion);
 
             K = Eigen::Matrix3d::Identity();
-            K[0,0] = fx;
-            K[1,1] = fy;
-            K[0,2] = cx;
-            K[1,2] = cy;
+            K(0,0) = fx;
+            K(1,1) = fy;
+            K(0,2) = cx;
+            K(1,2) = cy;
         }
     }
 

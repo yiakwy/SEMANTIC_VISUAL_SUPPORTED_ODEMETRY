@@ -16,6 +16,7 @@
 #include "base/io/sensors/velodyne_points.h"
 #include "flags/sequential_linefit_flags.h"
 
+#include "linefit_ground_segment.h"
 
 namespace svso {
 namespace lidar {
@@ -86,6 +87,8 @@ public:
 
         thresh_ = FLAGS_dist_thresh;
         iterations_ = FLAGS_sequential_max_iterations;
+        input_ = nullptr;
+        sqrt_dist_error_ = std::numeric_limits<double>::max() - 1;
     }
 
     void set_last_guess(pcl::ModelCoefficients::Ptr guess) {
@@ -94,11 +97,14 @@ public:
 
     void EstimatePlane(const pcl::PointCloud<PCLPoint>& structured_points);
 
-    void getSamples(int i, std::vector<int>& samples);
+    /*
+     * Sequential segment interface adapted from PCL Ransac with customer implementation for SVSO SequentialLinefit algorithm
+     */
+    void getHeuristicSamples(int i, std::vector<int>& samples, const std::vector<int>& estimates);
 
-    void selectWithinDistance(const Eigen::VectorXf& coefficients, double thresh, vector<int>& indices);
+    double selectWithinDistance(const Eigen::VectorXf& coefficients, double thresh, vector<int>& indices);
 
-    bool computeModelCoefficients(const std::vector<int>& samples, Eigen::VectorXf& coeff);
+    bool computeModelCoefficients(const std::vector<int>& samples, Eigen::VectorXf& coeff, const pcl::PointCloud<PCLPoint>& structured_points);
 
     size_t countWithinDistance(const Eigen::VectorXf& coeff, double thresh);
 
@@ -114,6 +120,9 @@ private:
     double thresh_;
     int iterations_;
     pcl::ModelCoefficients::Ptr last_guess_;
+    // not resources owner
+    pcl::PointCloud<PCLPoint>* input_;
+    double sqrt_dist_error_;
 };
 
 MODEL_REGISTER_SUBCLASS(GroundEstimate, SequentialSACLinefitGroundEstimateImpl);

@@ -57,7 +57,7 @@ void LinefitGroundSegment::insertPoints(const PointCloud &cloud) {
         const double sector_res = 360.0 / init_options_.n_segments;
         const double range_step_res = (init_options_.r_max - init_options_.r_min) / init_options_.n_bins;
 
-        int horizontal_scans = init_options_.livox_points_init_options.horizontal_span_of_view /
+        int horizontal_scans = init_options_.sensor_points_init_options.horizontal_span_of_view /
                                sector_res;
 
         for (size_t i = range.begin(); i < range.end(); ++i) {
@@ -130,7 +130,7 @@ void LinefitGroundSegment::assignCluster(std::vector<int> *segmentation) {
         const double sector_res = 360.0 / init_options_.n_segments;
         const double range_step_res = (init_options_.r_max - init_options_.r_min) / init_options_.n_bins;
 
-        int horizontal_scans = init_options_.livox_points_init_options.horizontal_span_of_view /
+        int horizontal_scans = init_options_.sensor_points_init_options.horizontal_span_of_view /
                                sector_res;
 
         for (size_t i=range.begin(); i < range.end(); i++) {
