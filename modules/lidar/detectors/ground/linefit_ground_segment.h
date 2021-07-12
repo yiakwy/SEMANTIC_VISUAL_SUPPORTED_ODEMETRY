@@ -1,5 +1,8 @@
 //
 // Created by yiak on 2021/7/5.
+//  Adapted from original codebase https://github.com/lorenwel/linefit_ground_segmentation
+//  to replace PCL SACSegmentation algorithm
+// Credits to original author
 //
 #pragma once
 
@@ -47,7 +50,7 @@ struct LinefitGroundSegmentInitOptions {
     double r_max_square = 80 * 80;
     double r_max = 80;
 
-    LivoxPointsInitOptions livox_points_init_options;
+    VelodynePoints::InitOptions sensor_points_init_options;
 
     /*
      * ** Ground conditions **

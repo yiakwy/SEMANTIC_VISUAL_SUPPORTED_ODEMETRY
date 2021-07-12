@@ -1,5 +1,8 @@
 //
 // Created by yiak on 2021/7/5.
+//  Adapted from original codebase https://github.com/lorenwel/linefit_ground_segmentation
+//  to replace PCL SACSegmentation algorithm
+// Credits to original author
 //
 #pragma once
 
@@ -20,13 +23,15 @@ namespace svso {
 namespace lidar {
 namespace perception {
 
-using namespace mapping::base::io::reader;
+using namespace svso::base::io::reader;
 
 // use our registered PCL Vec3 and custom Point3D
 using PCLPoint = Point3D;
 
 #define EPILON 1e-3
 
+// we prefer use Segment instead of Bin in program while keep original name style from Linefit Ground Segmentation method
+// i.e., <segment, bin> -> <sector, segment>
 class Bin {
 public:
     struct MinZPoint {
