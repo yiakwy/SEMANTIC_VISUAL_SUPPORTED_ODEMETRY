@@ -19,7 +19,7 @@ numpy
 jupyterlab
 
 # proto
-protobuf==3.11.1
+protobuf==3.15.0
 
 grpcio-tools
 
